@@ -55,28 +55,39 @@ public class DatabaseAPI {
             if (rsLivroExistente.next()) {
                 idLivro = rsLivroExistente.getInt("id_livro"); // Livro já existe
                 System.out.println("Livro já cadastrado. Criando nova cópia...");
+                stmtLivroExistente.close();
 
-                // Criar uma nova cópia do livro
-                String sqlInserirCopia = "INSERT INTO copia_livro (id_livro) VALUES (?)";
-                PreparedStatement stmtInserirCopia = conexao.prepareStatement(sqlInserirCopia);
-                stmtInserirCopia.setInt(1, idLivro);
-                stmtInserirCopia.executeUpdate();
-                stmtInserirCopia.close();
-
-                System.out.println("Nova cópia criada com sucesso!");
             } else {
-                // Inserir novo livro (o trigger cuidará da cópia automaticamente)
                 String sqlInserirLivro = "INSERT INTO livro (titulo, isbn, id_autor) VALUES (?, ?, ?)";
                 PreparedStatement stmtInserirLivro = conexao.prepareStatement(sqlInserirLivro);
                 stmtInserirLivro.setString(1, titulo);
                 stmtInserirLivro.setString(2, isbn);
                 stmtInserirLivro.setInt(3, idAutor);
                 stmtInserirLivro.executeUpdate();
-                stmtInserirLivro.close();
+
+                String sqlGetIDLivro = "SELECT id_livro FROM livro WHERE titulo = ? AND isbn = ?";
+                PreparedStatement stmtGetIDLivro = conexao.prepareStatement(sqlGetIDLivro);
+                stmtGetIDLivro.setString(1, titulo);
+                stmtGetIDLivro.setString(2, isbn);
+                ResultSet rsIDLivro = stmtGetIDLivro.executeQuery();
+                if (rsIDLivro.next()) {
+                    idLivro = rsIDLivro.getInt("id_livro");
+                } else {
+                    throw new SQLException("Erro ao recuperar id do livro.");
+                }
+                stmtGetIDLivro.close();
 
                 System.out.println("Livro inserido com sucesso!");
             }
-            stmtLivroExistente.close();
+
+            // Criar uma nova cópia do livro
+            String sqlInserirCopia = "INSERT INTO copia_livro (id_livro) VALUES (?)";
+            PreparedStatement stmtInserirCopia = conexao.prepareStatement(sqlInserirCopia);
+            stmtInserirCopia.setInt(1, idLivro);
+            stmtInserirCopia.executeUpdate();
+            stmtInserirCopia.close();
+            System.out.println("Nova cópia criada com sucesso!");
+
             return true;
 
         } catch (SQLException e) {
@@ -87,23 +98,28 @@ public class DatabaseAPI {
 
     public boolean inserirMembro(String emailBibliotecario, String senhaBibliotecario, String nome, String email, String telefone, PapelMembro papel, String senhaHash) {
         try {
-            // Autenticar bibliotecário
-            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
-                System.out.println("Apenas bibliotecários podem excluir cópias de livros!");
-                return false;
-            }
-            // Verificar se o membro já existe pelo email ou telefone
-            String sqlVerificar = "SELECT id_membro FROM membros WHERE email = ? OR telefone = ?";
-            PreparedStatement stmtVerificar = conexao.prepareStatement(sqlVerificar);
-            stmtVerificar.setString(1, email);
-            stmtVerificar.setString(2, telefone);
-            ResultSet rsVerificar = stmtVerificar.executeQuery();
+            String sqlFirstVerification = "SELECT * FROM membros";
+            PreparedStatement FirstVerification = conexao.prepareStatement(sqlFirstVerification);
+            ResultSet rsFirstVerification = FirstVerification.executeQuery();
+            if(rsFirstVerification.next()) {
+                // Autenticar bibliotecário
+                if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+                    System.out.println("Apenas Bibliotecários podem inserir Membros!");
+                    return false;
+                }
+                // Verificar se o membro já existe pelo email ou telefone
+                String sqlVerificar = "SELECT id_membro FROM membros WHERE email = ? OR telefone = ?";
+                PreparedStatement stmtVerificar = conexao.prepareStatement(sqlVerificar);
+                stmtVerificar.setString(1, email);
+                stmtVerificar.setString(2, telefone);
+                ResultSet rsVerificar = stmtVerificar.executeQuery();
 
-            if (rsVerificar.next()) {
-                System.out.println("Membro já cadastrado! Não será inserido novamente.");
-                return true; // Sai do método sem inserir um novo membro
+                if (rsVerificar.next()) {
+                    System.out.println("Membro já cadastrado! Não será inserido novamente.");
+                    return true; // Sai do método sem inserir um novo membro
+                }
+                stmtVerificar.close();
             }
-            stmtVerificar.close();
 
             // Inserir novo membro
             senhaHash = BCrypt.hashpw(senhaHash, BCrypt.gensalt(12)); //hashing da senha;
