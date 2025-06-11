@@ -253,10 +253,10 @@ public class DatabaseAPI {
             }
 
             // Verificar se o membro existe
-            String sqlMembro = "SELECT id_membro FROM membros WHERE email = ?";
-            PreparedStatement stmtMembro = conexao.prepareStatement(sqlMembro);
-            stmtMembro.setString(1, emailMembro);
-            ResultSet rsMembro = stmtMembro.executeQuery();
+            String sqlVerificarMembro = "SELECT id_membro FROM membros WHERE email = ?";
+            PreparedStatement stmtVerificarMembro = conexao.prepareStatement(sqlVerificarMembro);
+            stmtVerificarMembro.setString(1, emailMembro);
+            ResultSet rsMembro = stmtVerificarMembro.executeQuery();
 
             int idMembro;
             if (rsMembro.next()) {
@@ -265,35 +265,35 @@ public class DatabaseAPI {
                 System.out.println("Membro não encontrado!");
                 return false;
             }
-            stmtMembro.close();
+            stmtVerificarMembro.close();
 
-            // Verificar se o livro existe e se há cópias disponíveis
+            // Verificar se há cópias disponíveis
             String sqlCopiaDisponivel = "SELECT id_copia_livro FROM copia_livro WHERE id_livro = (SELECT id_livro FROM livro WHERE titulo = ?) AND status_livro = 'disponivel' LIMIT 1";
-            PreparedStatement stmtCopia = conexao.prepareStatement(sqlCopiaDisponivel);
-            stmtCopia.setString(1, tituloLivro);
-            ResultSet rsCopia = stmtCopia.executeQuery();
+            PreparedStatement stmtCopiaDisponivel = conexao.prepareStatement(sqlCopiaDisponivel);
+            stmtCopiaDisponivel.setString(1, tituloLivro);
+            ResultSet rsCopia = stmtCopiaDisponivel.executeQuery();
 
-            int idCopiaLivro;
+            int idCopia;
             if (rsCopia.next()) {
-                idCopiaLivro = rsCopia.getInt("id_copia_livro");
+                idCopia = rsCopia.getInt("id_copia_livro");
             } else {
                 System.out.println("Nenhuma cópia disponível para empréstimo!");
                 return false;
             }
-            stmtCopia.close();
+            stmtCopiaDisponivel.close();
 
-            // Criar o empréstimo
-            String sqlEmprestimo = "INSERT INTO emprestimo (id_copia_livro, id_membro, status_emprestimo, multa) VALUES (?, ?, 'ativo', 0)";
-            PreparedStatement stmtEmprestimo = conexao.prepareStatement(sqlEmprestimo);
-            stmtEmprestimo.setInt(1, idCopiaLivro);
-            stmtEmprestimo.setInt(2, idMembro);
-            stmtEmprestimo.executeUpdate();
-            stmtEmprestimo.close();
+            // Registrar o empréstimo com data atual e devolução em 7 dias
+            String sqlRegistrarEmprestimo = "INSERT INTO emprestimo (id_copia_livro, id_membro, data_emprestimo, data_devolucao, status_emprestimo, multa) VALUES (?, ?, NOW(), NOW() + INTERVAL 7 DAY, 'ativo', 0)";
+            PreparedStatement stmtRegistrarEmprestimo = conexao.prepareStatement(sqlRegistrarEmprestimo);
+            stmtRegistrarEmprestimo.setInt(1, idCopia);
+            stmtRegistrarEmprestimo.setInt(2, idMembro);
+            stmtRegistrarEmprestimo.executeUpdate();
+            stmtRegistrarEmprestimo.close();
 
-            // Atualizar o status da cópia para 'emprestado'
+            // Atualizar status da cópia para 'emprestado'
             String sqlAtualizarCopia = "UPDATE copia_livro SET status_livro = 'emprestado' WHERE id_copia_livro = ?";
             PreparedStatement stmtAtualizarCopia = conexao.prepareStatement(sqlAtualizarCopia);
-            stmtAtualizarCopia.setInt(1, idCopiaLivro);
+            stmtAtualizarCopia.setInt(1, idCopia);
             stmtAtualizarCopia.executeUpdate();
             stmtAtualizarCopia.close();
 
@@ -305,6 +305,7 @@ public class DatabaseAPI {
             return false;
         }
     }
+
 
     public boolean darBaixaEmprestimo(String emailBibliotecario, String senhaBibliotecario, String emailMembro, String tituloLivro) {
         try {
@@ -387,7 +388,7 @@ public class DatabaseAPI {
         }
     }
 
-    public boolean excluirCopiasLivro(String emailBibliotecario, String senhaBibliotecario, String tituloLivro, boolean excluirTodas) {
+    public boolean excluirCopiasLivro(String emailBibliotecario, String senhaBibliotecario, String tituloLivro, int quantidade) {
         try {
             // Autenticar bibliotecário
             if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
@@ -411,22 +412,59 @@ public class DatabaseAPI {
             }
             stmtLivro.close();
 
-            if (excluirTodas) {
-                // Excluir todos os empréstimos atrelados às cópias do livro
+            // Contar quantas cópias existem
+            String sqlContarCopias = "SELECT COUNT(*) AS total_copias FROM copia_livro WHERE id_livro = ?";
+            PreparedStatement stmtContarCopias = conexao.prepareStatement(sqlContarCopias);
+            stmtContarCopias.setInt(1, idLivro);
+            ResultSet rsCopias = stmtContarCopias.executeQuery();
+
+            int totalCopias = 0;
+            if (rsCopias.next()) {
+                totalCopias = rsCopias.getInt("total_copias");
+            }
+            stmtContarCopias.close();
+
+            // Buscar cópias disponíveis para exclusão
+            String sqlCopiasDisponiveis = "SELECT id_copia_livro FROM copia_livro WHERE id_livro = ? AND id_copia_livro NOT IN (SELECT id_copia_livro FROM emprestimo) LIMIT ?";
+            PreparedStatement stmtCopiasDisponiveis = conexao.prepareStatement(sqlCopiasDisponiveis);
+            stmtCopiasDisponiveis.setInt(1, idLivro);
+            stmtCopiasDisponiveis.setInt(2, quantidade);
+            ResultSet rsCopiasDisponiveis = stmtCopiasDisponiveis.executeQuery();
+
+            int copiasExcluidas = 0;
+            while (rsCopiasDisponiveis.next()) {
+                int idCopia = rsCopiasDisponiveis.getInt("id_copia_livro");
+
+                // Excluir cópia disponível
+                String sqlExcluirCopia = "DELETE FROM copia_livro WHERE id_copia_livro = ?";
+                PreparedStatement stmtExcluirCopia = conexao.prepareStatement(sqlExcluirCopia);
+                stmtExcluirCopia.setInt(1, idCopia);
+                stmtExcluirCopia.executeUpdate();
+                stmtExcluirCopia.close();
+
+                copiasExcluidas++;
+            }
+            stmtCopiasDisponiveis.close();
+
+            // Se ainda houver cópias a excluir, mas todas estão atreladas a empréstimos, excluir empréstimos antes das cópias
+            if (copiasExcluidas < quantidade) {
                 String sqlExcluirEmprestimos = "DELETE FROM emprestimo WHERE id_copia_livro IN (SELECT id_copia_livro FROM copia_livro WHERE id_livro = ?)";
                 PreparedStatement stmtExcluirEmprestimos = conexao.prepareStatement(sqlExcluirEmprestimos);
                 stmtExcluirEmprestimos.setInt(1, idLivro);
                 stmtExcluirEmprestimos.executeUpdate();
                 stmtExcluirEmprestimos.close();
 
-                // Excluir todas as cópias do livro
-                String sqlExcluirCopias = "DELETE FROM copia_livro WHERE id_livro = ?";
-                PreparedStatement stmtExcluirCopias = conexao.prepareStatement(sqlExcluirCopias);
-                stmtExcluirCopias.setInt(1, idLivro);
-                stmtExcluirCopias.executeUpdate();
-                stmtExcluirCopias.close();
+                // Excluir as cópias restantes
+                String sqlExcluirCopiasRestantes = "DELETE FROM copia_livro WHERE id_livro = ? LIMIT ?";
+                PreparedStatement stmtExcluirCopiasRestantes = conexao.prepareStatement(sqlExcluirCopiasRestantes);
+                stmtExcluirCopiasRestantes.setInt(1, idLivro);
+                stmtExcluirCopiasRestantes.setInt(2, quantidade - copiasExcluidas);
+                stmtExcluirCopiasRestantes.executeUpdate();
+                stmtExcluirCopiasRestantes.close();
+            }
 
-                // Excluir o próprio livro
+            // Se todas as cópias foram excluídas, remover o livro e o autor (se necessário)
+            if (quantidade >= totalCopias) {
                 String sqlExcluirLivro = "DELETE FROM livro WHERE id_livro = ?";
                 PreparedStatement stmtExcluirLivro = conexao.prepareStatement(sqlExcluirLivro);
                 stmtExcluirLivro.setInt(1, idLivro);
@@ -451,29 +489,9 @@ public class DatabaseAPI {
                 stmtVerificarAutor.close();
 
                 System.out.println("Todas as cópias do livro foram excluídas, e o livro foi removido!");
-            } else {
-                // Excluir um único empréstimo atrelado à cópia antes de excluir a cópia
-                String sqlExcluirEmprestimo = "DELETE FROM emprestimo WHERE id_copia_livro = (SELECT id_copia_livro FROM copia_livro WHERE id_livro = ? LIMIT 1)";
-                PreparedStatement stmtExcluirEmprestimo = conexao.prepareStatement(sqlExcluirEmprestimo);
-                stmtExcluirEmprestimo.setInt(1, idLivro);
-                stmtExcluirEmprestimo.executeUpdate();
-                stmtExcluirEmprestimo.close();
-
-                // Excluir apenas uma cópia do livro
-                String sqlExcluirUmaCopia = "DELETE FROM copia_livro WHERE id_livro = ? LIMIT 1";
-                PreparedStatement stmtExcluirUmaCopia = conexao.prepareStatement(sqlExcluirUmaCopia);
-                stmtExcluirUmaCopia.setInt(1, idLivro);
-                int linhasAfetadas = stmtExcluirUmaCopia.executeUpdate();
-                stmtExcluirUmaCopia.close();
-
-                if (linhasAfetadas > 0) {
-                    System.out.println("Uma cópia do livro foi excluída!");
-                } else {
-                    System.out.println("Nenhuma cópia disponível para exclusão.");
-                    return false;
-                }
             }
 
+            System.out.println("Copias Excluidas com sucesso!");
             return true;
 
         } catch (SQLException e) {
@@ -481,6 +499,8 @@ public class DatabaseAPI {
             return false;
         }
     }
+
+
 
     public boolean excluirMembro(String emailBibliotecario, String senhaBibliotecario, String email) {
         try {
