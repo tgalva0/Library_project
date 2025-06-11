@@ -482,6 +482,59 @@ public class DatabaseAPI {
         }
     }
 
+    public boolean excluirMembro(String emailBibliotecario, String senhaBibliotecario, String email) {
+        try {
+            // Autenticar bibliotecário
+            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+                System.out.println("Apenas bibliotecários podem excluir membros!");
+                return false;
+            }
+            // Verificar se o usuário existe
+            String sqlVerificarUsuario = "SELECT id_membro FROM membros WHERE email = ?";
+            PreparedStatement stmtVerificarUsuario = conexao.prepareStatement(sqlVerificarUsuario);
+            stmtVerificarUsuario.setString(1, email);
+            ResultSet rsUsuario = stmtVerificarUsuario.executeQuery();
+
+            int idUsuario;
+            if (rsUsuario.next()) {
+                idUsuario = rsUsuario.getInt("id_membro");
+            } else {
+                System.out.println("Usuário não encontrado!");
+                return false;
+            }
+            stmtVerificarUsuario.close();
+
+            // Atualizar status das cópias para 'disponível'
+            String sqlAtualizarCopias = "UPDATE copia_livro SET status_livro = 'disponivel' WHERE id_copia_livro IN (SELECT id_copia_livro FROM emprestimo WHERE id_membro = ?)";
+            PreparedStatement stmtAtualizarCopias = conexao.prepareStatement(sqlAtualizarCopias);
+            stmtAtualizarCopias.setInt(1, idUsuario);
+            stmtAtualizarCopias.executeUpdate();
+            stmtAtualizarCopias.close();
+
+            // Excluir os empréstimos do membro
+            String sqlExcluirEmprestimos = "DELETE FROM emprestimo WHERE id_membro = ?";
+            PreparedStatement stmtExcluirEmprestimos = conexao.prepareStatement(sqlExcluirEmprestimos);
+            stmtExcluirEmprestimos.setInt(1, idUsuario);
+            stmtExcluirEmprestimos.executeUpdate();
+            stmtExcluirEmprestimos.close();
+
+
+            //Deletar membro
+            String sqlExclueUsuario = "DELETE FROM membros WHERE email = ?";
+            PreparedStatement stmtExclueUsuario = conexao.prepareStatement(sqlExclueUsuario);
+            stmtExclueUsuario.setString(1, email);
+            stmtExclueUsuario.executeUpdate();
+            stmtExclueUsuario.close();
+
+            System.out.println("Membro excluido com sucesso");
+
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Erro ao excluir membro: " + e.getMessage());
+            return false;
+        }
+    }
+
 
 
 }
