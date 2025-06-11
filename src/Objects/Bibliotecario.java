@@ -50,4 +50,34 @@ public class Bibliotecario extends Membro{
         }
         return result;
     }
+
+    public boolean registrarLivro(DatabaseAPI db, String titulo, String autor, String isbn) {
+        var result = db.inserirLivro(this.getEmail(), this.getSenha(), titulo, autor, isbn);
+        if(result) {
+            System.out.println("Livro inserido com sucesso");
+        } else {
+            System.out.println("Erro ao inserir livro");
+        }
+        return result;
+    }
+
+    public boolean excluirMembro(DatabaseAPI db, String email) {
+        var result = db.excluirMembro(this.getEmail(), this.getSenha(), email);
+        if(result) {
+            System.out.println("Membro excluido com sucesso");
+        } else {
+            System.out.println("Erro ao excluir membro");
+        }
+        return result;
+    }
+
+    public boolean excluirCopiaLivro(DatabaseAPI db, String titulo, int quantidade) {
+        var result = db.excluirCopiasLivro(this.getEmail(), this.getSenha(), titulo, quantidade);
+        if(result) {
+            System.out.println("Copia excluida com sucesso");
+        } else {
+            System.out.println("Erro ao excluir copia");
+        }
+        return result;
+    }
 }
