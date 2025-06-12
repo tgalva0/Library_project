@@ -1,5 +1,6 @@
 package main.database;
 
+import Objects.Bibliotecario;
 import Objects.Emprestimo;
 import Objects.Livro;
 import Objects.Membro;
@@ -8,6 +9,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class DatabaseAPI {
     Connection conexao = MyJDBC.getConnection();
@@ -168,7 +170,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     public boolean inserirLivro(String emailBibliotecario, String senhaBibliotecario, String titulo, String isbn, String nomeAutor) {
         try {
             // Autenticar bibliotecário
-            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
                 System.out.println("Apenas bibliotecários podem excluir cópias de livros!");
                 return false;
             }
@@ -258,7 +260,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
             ResultSet rsFirstVerification = FirstVerification.executeQuery();
             if(rsFirstVerification.next()) {
                 // Autenticar bibliotecário
-                if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+                if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
                     System.out.println("Apenas Bibliotecários podem inserir Membros!");
                     return false;
                 }
@@ -298,25 +300,32 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
         return false;
     }
 
-    public boolean autenticarBibliotecario(String email, String senha) {
+    public Optional<Bibliotecario> autenticarBibliotecario(String email, String senha) {
+        Bibliotecario retorno = null;
         try {
-            String sql = "SELECT senha_hash FROM membros WHERE email = ? AND papel = 'bibliotecario'";
+            String sql = "SELECT * FROM membros WHERE email = ? AND papel = 'bibliotecario'";
             PreparedStatement stmt = conexao.prepareStatement(sql);
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
                 String hashArmazenado = rs.getString("senha_hash");
+                String nome = rs.getString("nome");
+                String telefone = rs.getString("telefone");
                 stmt.close();
-                return BCrypt.checkpw(senha, hashArmazenado);
+                if(BCrypt.checkpw(senha, hashArmazenado)) {
+                    retorno = new Bibliotecario(nome,telefone,email,hashArmazenado);
+                }
+
             } else {
                 stmt.close();
-                return false; // Bibliotecário não encontrado ou senha incorreta
+                return Optional.ofNullable(retorno); // Bibliotecário não encontrado ou senha incorreta
             }
         } catch (SQLException e) {
             System.out.println("Erro ao autenticar bibliotecário: " + e.getMessage());
-            return false;
+            return Optional.ofNullable(retorno);
         }
+        return Optional.ofNullable(retorno);
     }
 
 
@@ -348,7 +357,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     public boolean atualizarDadosUsuario(String emailBibliotecario, String senhaBibliotecario, String emailUsuario,String senha_usuario, String novoEmail, String novaSenha, String novoTelefone) {
         try {
             // Autenticar bibliotecário
-            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
                 System.out.println("Apenas bibliotecários podem alterar dados de usuários!");
                 return false;
             }
@@ -402,7 +411,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     public boolean registrarEmprestimo(String emailBibliotecario, String senhaBibliotecario, String emailMembro, String tituloLivro) {
         try {
             // Autenticar bibliotecário
-            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
                 System.out.println("Apenas bibliotecários podem registrar empréstimos!");
                 return false;
             }
@@ -465,7 +474,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     public boolean darBaixaEmprestimo(String emailBibliotecario, String senhaBibliotecario, String emailMembro, String tituloLivro) {
         try {
             // Autenticar bibliotecário
-            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
                 System.out.println("Apenas bibliotecários podem dar baixa em empréstimos!");
                 return false;
             }
@@ -546,7 +555,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     public boolean excluirCopiasLivro(String emailBibliotecario, String senhaBibliotecario, String tituloLivro, int quantidade) {
         try {
             // Autenticar bibliotecário
-            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
                 System.out.println("Apenas bibliotecários podem excluir cópias de livros!");
                 return false;
             }
@@ -660,7 +669,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     public boolean excluirMembro(String emailBibliotecario, String senhaBibliotecario, String email) {
         try {
             // Autenticar bibliotecário
-            if (!autenticarBibliotecario(emailBibliotecario, senhaBibliotecario)) {
+            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
                 System.out.println("Apenas bibliotecários podem excluir membros!");
                 return false;
             }

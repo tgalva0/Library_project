@@ -1,33 +1,166 @@
 package Objects;
 
-import main.database.DatabaseAPI;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Scanner;
+import java.util.*;
 
 public class TerminalUI {
-    public void renderMainHub() {
-//        imprimir o hub de opções do usuario
+
+    public Map<String, String> renderLoginInterface() {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("!LOGIN!\nEMAIL: ");
+        String email = sc.nextLine();
+        System.out.println("\nPASSWORD: ");
+        String password = sc.nextLine();
+
+        // Criar o HashMap e armazenar os valores
+        Map<String, String> loginData = new HashMap<>();
+        loginData.put("email", email);
+        loginData.put("password", password);
+
+        return loginData;
     }
 
-    public void renderSerchLivro(ResultSet rs) throws SQLException {
-//        imprime o resultado de uma pesquisa por livros no slq
-//        (ainda preciso criar um metodo para isso na classe databaseAPI)
+    public MainHubActions renderMainHub(Optional<Bibliotecario> bibliotecario) {
+        int response1;
+        if(bibliotecario.isPresent()) {
+            do {
+                System.out.println("\n\nLogged in: " + bibliotecario.get().getNome() +
+                        "\n\nOpções:\n-Buscar por... (1)" +
+                        "\n-Registrar/Devolver emprestimo (2)" +
+                        "\n-Inserir novo... (3)" +
+                        "\n-Remover... (4)" +
+                        "\n-Atualizar registro de... (5)");
+                response1 = this.catchUserResponseInt();
+            } while(response1 < 1 || response1 > 5);
+            this.limparTela();
+            System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
+            int response2;
+            switch (response1) {
+                case 1 -> {
+                    do {
+                        System.out.println("\n\n!BUSCA!\n-Livro por Titulo (1)" +
+                                "\n-Livro por Autor (2)" +
+                                "\n-Membro por email (3)" +
+                                "\n-Emprestimos por email (4)");
+                        response2 = this.catchUserResponseInt();
+                    } while(response2 < 1 || response2 > 4);
+                    this.limparTela();
+                    System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
+                    switch (response2) {
+                        case 1 : return MainHubActions.LivroPorTitulo;
+                        case 2 : return MainHubActions.LivroPorAutor;
+                        case 3 : return MainHubActions.MembroPorEmail;
+                        case 4 : return MainHubActions.EmprestimoPorEmail;
+                    };
+                    break;
+                }
+                case 2 -> {
+                    do {
+                        System.out.println("\n\n!Emprestimos!\n-Registrar emprestimo (1)" +
+                                "\n-Devolução de emprestimo (2)");
+                        response2 = this.catchUserResponseInt();
+                    } while(response2 < 1 || response2 > 2);
+                    this.limparTela();
+                    System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
+                    switch (response2) {
+                        case 1 : return MainHubActions.RegistrarEmprestimo;
+                        case 2 : return MainHubActions.DevolverEmprestimo;
+                    };
+                    break;
+                }
+                case 3 -> {
+                    do {
+                        System.out.println("\n\n!Inserção!\n-Registrar Livro (1)" +
+                                "\n-Registrar Membro (2)");
+                        response2 = this.catchUserResponseInt();
+                    } while(response2 < 1 || response2 > 2);
+                    this.limparTela();
+                    System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
+                    switch (response2) {
+                        case 1 : return MainHubActions.RegistrarLivro;
+                        case 2 : return MainHubActions.RegistrarMembro;
+                    };
+                    break;
+                }
+                case 4 -> {
+                    do {
+                        System.out.println("\n\n!Remoção!\n-Remover Livro (1)" +
+                                "\n-Remover Copias de livro (2)" +
+                                "\n-Remover Membro (3)");
+                        response2 = this.catchUserResponseInt();
+                    } while(response2 < 1 || response2 > 3);
+                    this.limparTela();
+                    System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
+                    switch (response2) {
+                        case 1 : return MainHubActions.RemoverLivro;
+                        case 2 : return MainHubActions.RemoverCopiasLivro;
+                        case 3 : return MainHubActions.RemoverMembro;
+                    };
+                    break;
+                }
+
+                case 5 -> {
+                    do {
+                        System.out.println("\n\n!Atualização!\n-Atualizar Livro (1)" +
+                                "\n-Atualizar Membro (2)");
+                        response2 = this.catchUserResponseInt();
+                    } while(response2 < 1 || response2 > 2);
+                    this.limparTela();
+                    System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
+                    switch (response2) {
+                        case 1 : return MainHubActions.AtualizarLivro;
+                        case 2 : return MainHubActions.AtualizarMembro;
+                    };
+                    break;
+                }
+
+                default -> {
+                    return MainHubActions.ERRO;
+                }
+            }
+        }
+        System.out.println("\n\nERRO: Bibliotecario não logado.");
+
+        return MainHubActions.ERRO;
     }
 
-    public void renderSerchAutor(ResultSet rs) throws SQLException {
-//        mesma coisa do metodo anterior só que para autores
-//        (ainda preciso criar um metodo para isso na classe databaseAPI)
+    public void renderSerchLivro(Optional<Livro> livro) {
+//      imprime um livro vindo de uma pesquisa
+        if(livro.isPresent()) {
+            System.out.println("\nLivro encontrado!\n"+livro);
+        } else {
+            System.out.println("\nLivro não encontrado...");
+        }
     }
 
-    public void renderSerchEmprestimo(ResultSet rs) throws SQLException {
-//        mesma coisa do metodo anterior só que para emprestimos
-//        (ainda preciso criar um metodo para isso na classe databaseAPI)
+    public void renderSerchAutor(Optional<List<Livro>> livros) {
+        if(livros.isPresent()) {
+            System.out.println("\nEncontrei os seguintes livros:\n\n");
+            for(Livro livro : livros.get()) {
+                System.out.println(livro + "\n\n");
+            }
+        } else {
+            System.out.println("\nNenhum livro encontrado...");
+        }
     }
-    public void renderSerchMembros(ResultSet rs) throws SQLException {
-//        mesma coisa do metodo anterior só que para membros
-//        (ainda preciso criar um metodo para isso na classe databaseAPI)
+
+    public void renderSerchEmprestimo(Optional<List<Emprestimo>> emprestimos) {
+        if(emprestimos.isPresent()) {
+            System.out.println("\nEncontrei os seguintes emprestimos:\n\n");
+            for(Emprestimo emprestimo : emprestimos.get()) {
+                System.out.println(emprestimo + "\n\n");
+            }
+        } else {
+            System.out.println("\nNenhum emprestimo encontrado...");
+        }
+    }
+
+    public void renderSerchMembros(Optional<Membro> membro)  {
+        if(membro.isPresent()) {
+            System.out.println("\nEncontrei o seguinte membro:\n\n");
+            System.out.println(membro);
+        } else {
+            System.out.println("\nNenhum membro encontrado...");
+        }
     }
 
     public int catchUserResponseInt() { //retorna inteiro digitado pelo usuario
@@ -38,5 +171,17 @@ public class TerminalUI {
     public String catchUserResponseString() { //retorna a String digitada pelo usuario
         Scanner sc = new Scanner(System.in);
         return sc.nextLine();
+    }
+
+    public void limparTela() {
+        try {
+            if (System.getProperty("os.name").contains("Windows")) {
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                new ProcessBuilder("clear").inheritIO().start().waitFor();
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao limpar tela.");
+        }
     }
 }
