@@ -4,11 +4,13 @@ public class Livro {
     private final int id;
     private final String titulo;
     private final String autor;
+    private final String isbn;
     private final int num_copias;
 
-    public Livro(int id, String titulo, int num_copias, String autor) {
+    public Livro(int id, String titulo, String isbn, int num_copias, String autor) {
         this.id = id;
         this.titulo = titulo;
+        this.isbn = isbn;
         this.num_copias = num_copias;
         this.autor = autor;
     }
@@ -28,6 +30,6 @@ public class Livro {
 
     @Override
     public String toString() {
-        return ("\nTitulo = " + titulo + ",\nID = " + id + ",\nNum copias = " + num_copias);
+        return ("\nTitulo = " + titulo + ",\nID = " + id + ",\nNum copias = " + num_copias + ",\nAutor = " + autor + ",\nisbn = " + isbn);
     }
 }

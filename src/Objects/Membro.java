@@ -30,4 +30,8 @@ public class Membro {
     public String getTelefone() {
         return telefone;
     }
+
+    public String toString() {
+        return ("\nNome = " + nome + ",\nemail = " + email);
+    }
 }

@@ -1,14 +1,169 @@
 package main.database;
 
+import Objects.Emprestimo;
+import Objects.Livro;
+import Objects.Membro;
 import org.mindrot.jbcrypt.BCrypt;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseAPI {
     Connection conexao = MyJDBC.getConnection();
+
+    public Livro buscarLivroPorTitulo(String titulo) {
+        try {
+            // Buscar informações do livro e autor
+            String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
+                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ?";
+            PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
+            stmtLivro.setString(1, titulo);
+            ResultSet rsLivro = stmtLivro.executeQuery();
+
+            if (rsLivro.next()) {
+                int idLivro = rsLivro.getInt("id_livro");
+                String isbn = rsLivro.getString("isbn");
+                String autor = rsLivro.getString("autor");
+
+                stmtLivro.close();
+
+                // Contar cópias disponíveis
+                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
+                PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
+                stmtCopias.setInt(1, idLivro);
+                ResultSet rsCopias = stmtCopias.executeQuery();
+
+                int numCopiasDisponiveis = 0;
+                if (rsCopias.next()) {
+                    numCopiasDisponiveis = rsCopias.getInt("num_copias");
+                }
+                stmtCopias.close();
+
+                return new Livro(idLivro, titulo, isbn, numCopiasDisponiveis, autor);
+            } else {
+                stmtLivro.close();
+                System.out.println("Livro não encontrado!");
+                return null;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar livro: " + e.getMessage());
+            return null;
+        }
+    }
+
+
+
+    public List<Livro> buscarLivrosPorAutor(String nomeAutor) {
+        List<Livro> livros = new ArrayList<>();
+
+        try {
+            // Buscar livros do autor
+            String sqlLivros = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
+                    "JOIN autor a ON l.id_autor = a.id_autor WHERE a.nome = ?";
+            PreparedStatement stmtLivros = conexao.prepareStatement(sqlLivros);
+            stmtLivros.setString(1, nomeAutor);
+            ResultSet rsLivros = stmtLivros.executeQuery();
+
+            while (rsLivros.next()) {
+                int idLivro = rsLivros.getInt("id_livro");
+                String titulo = rsLivros.getString("titulo");
+                String isbn = rsLivros.getString("isbn");
+
+                // Contar cópias disponíveis
+                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
+                PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
+                stmtCopias.setInt(1, idLivro);
+                ResultSet rsCopias = stmtCopias.executeQuery();
+
+                int numCopiasDisponiveis = 0;
+                if (rsCopias.next()) {
+                    numCopiasDisponiveis = rsCopias.getInt("num_copias");
+                }
+                stmtCopias.close();
+
+                livros.add(new Livro(idLivro, titulo, isbn, numCopiasDisponiveis, nomeAutor));
+            }
+            stmtLivros.close();
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar livros do autor: " + e.getMessage());
+        }
+
+        return livros;
+    }
+
+
+public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
+        List<Emprestimo> emprestimos = new ArrayList<>();
+
+        try {
+            // Buscar ID do membro pelo email
+            String sqlMembro = "SELECT id_membro FROM membros WHERE email = ?";
+            PreparedStatement stmtMembro = conexao.prepareStatement(sqlMembro);
+            stmtMembro.setString(1, email);
+            ResultSet rsMembro = stmtMembro.executeQuery();
+
+            int idMembro;
+            if (rsMembro.next()) {
+                idMembro = rsMembro.getInt("id_membro");
+            } else {
+                System.out.println("Membro não encontrado!");
+                return emprestimos;
+            }
+            stmtMembro.close();
+
+            // Buscar empréstimos vinculados ao membro
+            String sqlEmprestimos = "SELECT * FROM emprestimo WHERE id_membro = ?";
+            PreparedStatement stmtEmprestimos = conexao.prepareStatement(sqlEmprestimos);
+            stmtEmprestimos.setInt(1, idMembro);
+            ResultSet rsEmprestimos = stmtEmprestimos.executeQuery();
+
+            while (rsEmprestimos.next()) {
+                int idEmprestimo = rsEmprestimos.getInt("id_emprestimo");
+                int idCopiaLivro = rsEmprestimos.getInt("id_copia_livro");
+                Timestamp dataEmprestimo = rsEmprestimos.getTimestamp("data_emprestimo");
+                Timestamp dataDevolucao = rsEmprestimos.getTimestamp("data_devolucao");
+                String statusEmprestimo = rsEmprestimos.getString("status_emprestimo");
+                double multa = rsEmprestimos.getDouble("multa");
+
+                emprestimos.add(new Emprestimo(idEmprestimo, idCopiaLivro, idMembro, dataEmprestimo, dataDevolucao, statusEmprestimo, multa));
+            }
+            stmtEmprestimos.close();
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar empréstimos: " + e.getMessage());
+        }
+
+        return emprestimos;
+    }
+
+
+    public Membro buscarMembroPorEmail(String email) {
+        try {
+            String sql = "SELECT nome, email, senha_hash, telefone FROM membros WHERE email = ?";
+            PreparedStatement stmt = conexao.prepareStatement(sql);
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String nome = rs.getString("nome");
+                String senhaHash = rs.getString("senha_hash");
+                String telefone = rs.getString("telefone");
+
+                stmt.close();
+                return new Membro(nome, email, senhaHash, telefone);
+            } else {
+                stmt.close();
+                System.out.println("Membro não encontrado!");
+                return null;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar membro: " + e.getMessage());
+            return null;
+        }
+    }
+
 
     public boolean inserirLivro(String emailBibliotecario, String senhaBibliotecario, String titulo, String isbn, String nomeAutor) {
         try {
