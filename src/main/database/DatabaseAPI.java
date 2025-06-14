@@ -1,11 +1,5 @@
 package main.database;
 
-import Objects.Bibliotecario;
-import Objects.Emprestimo;
-import Objects.Livro;
-import Objects.Membro;
-import org.mindrot.jbcrypt.BCrypt;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

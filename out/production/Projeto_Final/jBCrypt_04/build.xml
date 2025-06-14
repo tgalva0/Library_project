@@ -35,7 +35,7 @@
 				<pathelement path="${test-build}"/>
 			</classpath>
 			
-			<test name="org.mindrot.jbcrypt.TestBCrypt"/>
+			<test name="main.database.jbcrypt.TestBCrypt"/>
 		</junit>
 	</target>
 	

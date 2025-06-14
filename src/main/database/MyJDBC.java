@@ -5,7 +5,7 @@ import java.sql.*;
 public class MyJDBC {
     public static Connection getConnection() {
 
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = Dotenv.configure().directory("C:/Thiago/BSI/3-Semestre/Eng_Soft2/Projeto_Final/bin/main/database/.env").load();
         String url = dotenv.get("DB_URL");
         String user = dotenv.get("DB_USER");
         String password = dotenv.get("DB_PASSWORD");
