@@ -1,5 +1,6 @@
 package Objects;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class TerminalUI {
@@ -20,7 +21,7 @@ public class TerminalUI {
     }
 
     public MainHubActions renderMainHub(Optional<Bibliotecario> bibliotecario) {
-        int response1;
+        int response1 = 0;
         if(bibliotecario.isPresent()) {
             do {
                 System.out.println("\n\nLogged in: " + bibliotecario.get().getNome() +
@@ -29,11 +30,15 @@ public class TerminalUI {
                         "\n-Inserir novo... (3)" +
                         "\n-Remover... (4)" +
                         "\n-Atualizar registro de... (5)");
-                response1 = this.catchUserResponseInt();
+                try {
+                    response1 = this.catchUserResponseInt();
+                } catch (Exception e) {
+                    System.out.println("Erro: numero inesperado informado: " + e.getMessage());
+                }
             } while(response1 < 1 || response1 > 5);
             this.limparTela();
             System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
-            int response2;
+            int response2 = 0;
             switch (response1) {
                 case 1 -> {
                     do {
@@ -41,7 +46,11 @@ public class TerminalUI {
                                 "\n-Livro por Autor (2)" +
                                 "\n-Membro por email (3)" +
                                 "\n-Emprestimos por email (4)");
-                        response2 = this.catchUserResponseInt();
+                        try {
+                            response2 = this.catchUserResponseInt();
+                        } catch (Exception e) {
+                            System.out.println("Erro: numero inesperado informado: " + e.getMessage());
+                        }
                     } while(response2 < 1 || response2 > 4);
                     this.limparTela();
                     System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
@@ -57,7 +66,11 @@ public class TerminalUI {
                     do {
                         System.out.println("\n\n!Emprestimos!\n-Registrar emprestimo (1)" +
                                 "\n-Devolução de emprestimo (2)");
-                        response2 = this.catchUserResponseInt();
+                        try {
+                            response2 = this.catchUserResponseInt();
+                        } catch (Exception e) {
+                            System.out.println("Erro: numero inesperado informado: " + e.getMessage());
+                        }
                     } while(response2 < 1 || response2 > 2);
                     this.limparTela();
                     System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
@@ -71,7 +84,11 @@ public class TerminalUI {
                     do {
                         System.out.println("\n\n!Inserção!\n-Registrar Livro (1)" +
                                 "\n-Registrar Membro (2)");
-                        response2 = this.catchUserResponseInt();
+                        try {
+                            response2 = this.catchUserResponseInt();
+                        } catch (Exception e) {
+                            System.out.println("Erro: numero inesperado informado: " + e.getMessage());
+                        }
                     } while(response2 < 1 || response2 > 2);
                     this.limparTela();
                     System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
@@ -86,7 +103,11 @@ public class TerminalUI {
                         System.out.println("\n\n!Remoção!\n-Remover Livro (1)" +
                                 "\n-Remover Copias de livro (2)" +
                                 "\n-Remover Membro (3)");
-                        response2 = this.catchUserResponseInt();
+                        try {
+                            response2 = this.catchUserResponseInt();
+                        } catch (Exception e) {
+                            System.out.println("Erro: numero inesperado informado: " + e.getMessage());
+                        }
                     } while(response2 < 1 || response2 > 3);
                     this.limparTela();
                     System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
@@ -102,7 +123,11 @@ public class TerminalUI {
                     do {
                         System.out.println("\n\n!Atualização!\n-Atualizar Livro (1)" +
                                 "\n-Atualizar Membro (2)");
-                        response2 = this.catchUserResponseInt();
+                        try {
+                            response2 = this.catchUserResponseInt();
+                        } catch (Exception e) {
+                            System.out.println("Erro: numero inesperado informado: " + e.getMessage());
+                        }
                     } while(response2 < 1 || response2 > 2);
                     this.limparTela();
                     System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
@@ -123,7 +148,12 @@ public class TerminalUI {
         return MainHubActions.ERRO;
     }
 
-    public void renderSerchLivro(Optional<Livro> livro) {
+    public void renderMessage(String message) {
+        System.out.println("\n"+message);
+    }
+
+
+    public void renderResultSearchLivro(Optional<Livro> livro) {
 //      imprime um livro vindo de uma pesquisa
         if(livro.isPresent()) {
             System.out.println("\nLivro encontrado!\n"+livro);
@@ -132,7 +162,7 @@ public class TerminalUI {
         }
     }
 
-    public void renderSerchAutor(Optional<List<Livro>> livros) {
+    public void renderResultSerchAutor(Optional<List<Livro>> livros) {
         if(livros.isPresent()) {
             System.out.println("\nEncontrei os seguintes livros:\n\n");
             for(Livro livro : livros.get()) {
@@ -143,7 +173,7 @@ public class TerminalUI {
         }
     }
 
-    public void renderSerchEmprestimo(Optional<List<Emprestimo>> emprestimos) {
+    public void renderResultSerchEmprestimo(Optional<List<Emprestimo>> emprestimos) {
         if(emprestimos.isPresent()) {
             System.out.println("\nEncontrei os seguintes emprestimos:\n\n");
             for(Emprestimo emprestimo : emprestimos.get()) {
@@ -154,13 +184,24 @@ public class TerminalUI {
         }
     }
 
-    public void renderSerchMembros(Optional<Membro> membro)  {
+    public void renderResultSerchMembros(Optional<Membro> membro)  {
         if(membro.isPresent()) {
             System.out.println("\nEncontrei o seguinte membro:\n\n");
             System.out.println(membro);
         } else {
             System.out.println("\nNenhum membro encontrado...");
         }
+    }
+
+    public Map<String, String> requestEmprestimoInfo() {
+        this.renderMessage("Emprestimo: \nTitulo: ");
+        var result = new HashMap<String, String>();
+        String Titulo = this.catchUserResponseString();
+        this.renderMessage("Email usuário: ");
+        String Email = this.catchUserResponseString();
+        result.put("titulo", Titulo);
+        result.put("email", Email);
+        return result;
     }
 
     public int catchUserResponseInt() { //retorna inteiro digitado pelo usuario

@@ -14,7 +14,7 @@ import java.util.Optional;
 public class DatabaseAPI {
     Connection conexao = MyJDBC.getConnection();
 
-    public Livro buscarLivroPorTitulo(String titulo) {
+    public Optional<Livro> buscarLivroPorTitulo(String titulo) {
         try {
             // Buscar informações do livro e autor
             String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
@@ -42,7 +42,7 @@ public class DatabaseAPI {
                 }
                 stmtCopias.close();
 
-                return new Livro(idLivro, titulo, isbn, numCopiasDisponiveis, autor);
+                return Optional.of(new Livro(idLivro, titulo, isbn, numCopiasDisponiveis, autor));
             } else {
                 stmtLivro.close();
                 System.out.println("Livro não encontrado!");
@@ -56,7 +56,7 @@ public class DatabaseAPI {
 
 
 
-    public List<Livro> buscarLivrosPorAutor(String nomeAutor) {
+    public Optional<List<Livro>> buscarLivrosPorAutor(String nomeAutor) {
         List<Livro> livros = new ArrayList<>();
 
         try {
@@ -92,11 +92,11 @@ public class DatabaseAPI {
             System.out.println("Erro ao buscar livros do autor: " + e.getMessage());
         }
 
-        return livros;
+        return Optional.of(livros);
     }
 
 
-public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
+public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
         List<Emprestimo> emprestimos = new ArrayList<>();
 
         try {
@@ -111,7 +111,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
                 idMembro = rsMembro.getInt("id_membro");
             } else {
                 System.out.println("Membro não encontrado!");
-                return emprestimos;
+                return Optional.of(emprestimos);
             }
             stmtMembro.close();
 
@@ -137,11 +137,11 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
             System.out.println("Erro ao buscar empréstimos: " + e.getMessage());
         }
 
-        return emprestimos;
+        return Optional.of(emprestimos);
     }
 
 
-    public Membro buscarMembroPorEmail(String email) {
+    public Optional<Membro> buscarMembroPorEmail(String email) {
         try {
             String sql = "SELECT nome, email, senha_hash, telefone FROM membros WHERE email = ?";
             PreparedStatement stmt = conexao.prepareStatement(sql);
@@ -154,7 +154,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
                 String telefone = rs.getString("telefone");
 
                 stmt.close();
-                return new Membro(nome, email, senhaHash, telefone);
+                return Optional.of(new Membro(nome, email, senhaHash, telefone));
             } else {
                 stmt.close();
                 System.out.println("Membro não encontrado!");
@@ -167,13 +167,8 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     }
 
 
-    public boolean inserirLivro(String emailBibliotecario, String senhaBibliotecario, String titulo, String isbn, String nomeAutor) {
+    public boolean inserirLivro(String titulo, String isbn, String nomeAutor) {
         try {
-            // Autenticar bibliotecário
-            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
-                System.out.println("Apenas bibliotecários podem excluir cópias de livros!");
-                return false;
-            }
 
             // Verificar se o autor já existe
             String sqlAutor = "SELECT id_autor FROM autor WHERE nome = ?";
@@ -253,17 +248,12 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
         return false;
     }
 
-    public boolean inserirMembro(String emailBibliotecario, String senhaBibliotecario, String nome, String email, String telefone, PapelMembro papel, String senhaHash) {
+    public boolean inserirMembro(String nome, String email, String telefone, PapelMembro papel, String senhaHash) {
         try {
             String sqlFirstVerification = "SELECT * FROM membros";
             PreparedStatement FirstVerification = conexao.prepareStatement(sqlFirstVerification);
             ResultSet rsFirstVerification = FirstVerification.executeQuery();
             if(rsFirstVerification.next()) {
-                // Autenticar bibliotecário
-                if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
-                    System.out.println("Apenas Bibliotecários podem inserir Membros!");
-                    return false;
-                }
                 // Verificar se o membro já existe pelo email ou telefone
                 String sqlVerificar = "SELECT id_membro FROM membros WHERE email = ? OR telefone = ?";
                 PreparedStatement stmtVerificar = conexao.prepareStatement(sqlVerificar);
@@ -314,18 +304,19 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
                 String telefone = rs.getString("telefone");
                 stmt.close();
                 if(BCrypt.checkpw(senha, hashArmazenado)) {
-                    retorno = new Bibliotecario(nome,telefone,email,hashArmazenado);
+                    System.out.println("\nRetornei o bibliotecario");
+                    return Optional.of(new Bibliotecario(nome, telefone, email, senha));
                 }
 
             } else {
                 stmt.close();
-                return Optional.ofNullable(retorno); // Bibliotecário não encontrado ou senha incorreta
+                return Optional.empty(); // Bibliotecário não encontrado ou senha incorreta
             }
         } catch (SQLException e) {
             System.out.println("Erro ao autenticar bibliotecário: " + e.getMessage());
-            return Optional.ofNullable(retorno);
+            return Optional.empty();
         }
-        return Optional.ofNullable(retorno);
+        return Optional.empty();
     }
 
 
@@ -354,13 +345,9 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
         }
     }
 
-    public boolean atualizarDadosUsuario(String emailBibliotecario, String senhaBibliotecario, String emailUsuario,String senha_usuario, String novoEmail, String novaSenha, String novoTelefone) {
+    public boolean atualizarDadosUsuario( String emailUsuario,String senha_usuario, String novoEmail, String novaSenha, String novoTelefone) {
         try {
-            // Autenticar bibliotecário
-            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
-                System.out.println("Apenas bibliotecários podem alterar dados de usuários!");
-                return false;
-            }
+
 
             if(!validarLogin(emailUsuario, senha_usuario)) {
                 System.out.println("Email e senha incorretos");
@@ -408,13 +395,8 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     }
 
 
-    public boolean registrarEmprestimo(String emailBibliotecario, String senhaBibliotecario, String emailMembro, String tituloLivro) {
+    public boolean registrarEmprestimo(String emailMembro, String tituloLivro) {
         try {
-            // Autenticar bibliotecário
-            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
-                System.out.println("Apenas bibliotecários podem registrar empréstimos!");
-                return false;
-            }
 
             // Verificar se o membro existe
             String sqlVerificarMembro = "SELECT id_membro FROM membros WHERE email = ?";
@@ -471,13 +453,8 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
     }
 
 
-    public boolean darBaixaEmprestimo(String emailBibliotecario, String senhaBibliotecario, String emailMembro, String tituloLivro) {
+    public boolean darBaixaEmprestimo(String emailMembro, String tituloLivro) {
         try {
-            // Autenticar bibliotecário
-            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
-                System.out.println("Apenas bibliotecários podem dar baixa em empréstimos!");
-                return false;
-            }
 
             // Verificar se o membro existe
             String sqlMembro = "SELECT id_membro FROM membros WHERE email = ?";
@@ -526,7 +503,7 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
                 }
 
                 // Atualizar status do empréstimo para 'concluído'
-                String sqlAtualizarEmprestimo = "UPDATE emprestimo SET status_emprestimo = 'concluído' WHERE id_emprestimo = ?";
+                String sqlAtualizarEmprestimo = "UPDATE emprestimo SET status_emprestimo = 'concluído', data_devolucao = NOW() WHERE id_emprestimo = ?";
                 PreparedStatement stmtAtualizarEmprestimo = conexao.prepareStatement(sqlAtualizarEmprestimo);
                 stmtAtualizarEmprestimo.setInt(1, idEmprestimo);
                 stmtAtualizarEmprestimo.executeUpdate();
@@ -552,13 +529,9 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
         }
     }
 
-    public boolean excluirCopiasLivro(String emailBibliotecario, String senhaBibliotecario, String tituloLivro, int quantidade) {
+    public boolean excluirCopiasLivro( String tituloLivro, int quantidade) {
         try {
-            // Autenticar bibliotecário
-            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
-                System.out.println("Apenas bibliotecários podem excluir cópias de livros!");
-                return false;
-            }
+
 
             // Verificar se o livro existe
             String sqlLivro = "SELECT id_livro, id_autor FROM livro WHERE titulo = ?";
@@ -666,13 +639,9 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
 
 
 
-    public boolean excluirMembro(String emailBibliotecario, String senhaBibliotecario, String email) {
+    public boolean excluirMembro( String email) {
         try {
-            // Autenticar bibliotecário
-            if (autenticarBibliotecario(emailBibliotecario, senhaBibliotecario).isEmpty()) {
-                System.out.println("Apenas bibliotecários podem excluir membros!");
-                return false;
-            }
+
             // Verificar se o usuário existe
             String sqlVerificarUsuario = "SELECT id_membro FROM membros WHERE email = ?";
             PreparedStatement stmtVerificarUsuario = conexao.prepareStatement(sqlVerificarUsuario);
@@ -718,7 +687,4 @@ public List<Emprestimo> buscarEmprestimosPorEmail(String email) {
             return false;
         }
     }
-
-
-
 }
