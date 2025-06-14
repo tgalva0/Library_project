@@ -1,5 +1,7 @@
 package Objects;
 
+import main.database.PapelMembro;
+
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -29,13 +31,14 @@ public class TerminalUI {
                         "\n-Registrar/Devolver emprestimo (2)" +
                         "\n-Inserir novo... (3)" +
                         "\n-Remover... (4)" +
-                        "\n-Atualizar registro de... (5)");
+                        "\n-Atualizar registro de... (5)" +
+                        "\n-LogOut (6)");
                 try {
                     response1 = this.catchUserResponseInt();
                 } catch (Exception e) {
                     System.out.println("Erro: numero inesperado informado: " + e.getMessage());
                 }
-            } while(response1 < 1 || response1 > 5);
+            } while(response1 < 1 || response1 > 6);
             this.limparTela();
             System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
             int response2 = 0;
@@ -100,29 +103,9 @@ public class TerminalUI {
                 }
                 case 4 -> {
                     do {
-                        System.out.println("\n\n!Remoção!\n-Remover Livro (1)" +
-                                "\n-Remover Copias de livro (2)" +
-                                "\n-Remover Membro (3)");
-                        try {
-                            response2 = this.catchUserResponseInt();
-                        } catch (Exception e) {
-                            System.out.println("Erro: numero inesperado informado: " + e.getMessage());
-                        }
-                    } while(response2 < 1 || response2 > 3);
-                    this.limparTela();
-                    System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
-                    switch (response2) {
-                        case 1 : return MainHubActions.RemoverLivro;
-                        case 2 : return MainHubActions.RemoverCopiasLivro;
-                        case 3 : return MainHubActions.RemoverMembro;
-                    };
-                    break;
-                }
-
-                case 5 -> {
-                    do {
-                        System.out.println("\n\n!Atualização!\n-Atualizar Livro (1)" +
-                                "\n-Atualizar Membro (2)");
+                        System.out.println("\n\n!Remoção!" +
+                                "\n-Remover Copias de livro (1)" +
+                                "\n-Remover Membro (2)");
                         try {
                             response2 = this.catchUserResponseInt();
                         } catch (Exception e) {
@@ -132,10 +115,18 @@ public class TerminalUI {
                     this.limparTela();
                     System.out.println("\n\nLogged in: " + bibliotecario.get().getNome());
                     switch (response2) {
-                        case 1 : return MainHubActions.AtualizarLivro;
-                        case 2 : return MainHubActions.AtualizarMembro;
+                        case 1 : return MainHubActions.RemoverCopiasLivro;
+                        case 2 : return MainHubActions.RemoverMembro;
                     };
                     break;
+                }
+
+                case 5 -> {
+                    return MainHubActions.AtualizarMembro;
+                }
+
+                case 6 -> {
+                    return MainHubActions.LogOut;
                 }
 
                 default -> {
@@ -153,12 +144,14 @@ public class TerminalUI {
     }
 
 
-    public void renderResultSearchLivro(Optional<Livro> livro) {
+    public void renderResultSearchLivro(Optional<List<Livro>> livros) {
 //      imprime um livro vindo de uma pesquisa
-        if(livro.isPresent()) {
-            System.out.println("\nLivro encontrado!\n"+livro);
+        if(livros.isPresent()) {
+            for (Livro livro : livros.get()) {
+                System.out.println(livro);
+            }
         } else {
-            System.out.println("\nLivro não encontrado...");
+            System.out.println("\nNenhum livro encontrado");;
         }
     }
 
@@ -202,6 +195,38 @@ public class TerminalUI {
         result.put("titulo", Titulo);
         result.put("email", Email);
         return result;
+    }
+
+    public Livro requestLivroInfo() {
+        this.renderMessage("Livro: \nTitulo: ");
+        String titulo = this.catchUserResponseString();
+        this.renderMessage("\nAutor: ");
+        String autor = this.catchUserResponseString();
+        this.renderMessage("\nISBN: ");
+        String isbn = this.catchUserResponseString();
+        return new Livro(titulo,isbn,1, autor);
+    }
+
+    public Membro requestMembroInfo() {
+        this.renderMessage("Membro: \nNome: ");
+        String nome = this.catchUserResponseString();
+        this.renderMessage("\nEmail: ");
+        String email = this.catchUserResponseString();
+        this.renderMessage("\nTelefone: ");
+        String telefone = this.catchUserResponseString();
+        this.renderMessage("\nSenha: ");
+        String senha = this.catchUserResponseString();
+        this.renderMessage("\nPapel (Default = Cliente): ");
+        String papel = this.catchUserResponseString();
+
+        PapelMembro papelMembro = PapelMembro.CLIENTE;
+
+        if(papel.equals("bibliotecario")) {
+            papelMembro = PapelMembro.BIBLIOTECARIO;
+        }
+
+
+        return new Membro(nome,email,senha, telefone, papelMembro);
     }
 
     public int catchUserResponseInt() { //retorna inteiro digitado pelo usuario

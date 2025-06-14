@@ -1,11 +1,11 @@
 package main;
 
-import Objects.Bibliotecario;
-import Objects.MainHubActions;
-import Objects.TerminalUI;
+import Objects.*;
 import main.database.DatabaseAPI;
+import main.database.PapelMembro;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,14 +15,14 @@ public class AppLoop {
     private Optional<Bibliotecario> login = Optional.empty();
 
     public void loop() {
-        int i = 0;
         do{
             if(login.isPresent()) {
                 MainHubActions response = ui.renderMainHub(login);
                 switch (response) {
                     case LivroPorTitulo -> {
                         ui.renderMessage("Digite o Titulo do Livro: ");
-                        ui.renderResultSearchLivro(db.buscarLivroPorTitulo(ui.catchUserResponseString()));
+                        String titulo = ui.catchUserResponseString();
+                        ui.renderResultSearchLivro(db.buscarLivrosPorTitulo(titulo));
                         break;
                     }
 
@@ -34,7 +34,11 @@ public class AppLoop {
 
                     case MembroPorEmail -> {
                         ui.renderMessage("Digite o email do Membro: ");
-                        ui.renderResultSerchMembros(db.buscarMembroPorEmail(ui.catchUserResponseString()));
+                        try {
+                            ui.renderResultSerchMembros(db.buscarMembroPorEmail(ui.catchUserResponseString()));
+                        } catch (Exception e) {
+                            ui.renderMessage("Membro não encontrado");
+                        }
                         break;
                     }
 
@@ -56,8 +60,61 @@ public class AppLoop {
                         db.darBaixaEmprestimo(getInfo.get("email"), getInfo.get("titulo"));
                         break;
                     }
+
+                    case RegistrarLivro -> {
+                        Livro novoLivro = ui.requestLivroInfo();
+                        db.inserirLivro(novoLivro.getTitulo(), novoLivro.getIsbn(), novoLivro.getAutor());
+                        break;
+                    }
+
+                    case RegistrarMembro -> {
+                        Membro novoMembro = ui.requestMembroInfo();
+                        db.inserirMembro(novoMembro.getNome(),novoMembro.getEmail(), novoMembro.getTelefone(), novoMembro.getPapel(), novoMembro.getSenha());
+                        break;
+                    }
+
+                    case RemoverCopiasLivro -> {
+                        ui.renderMessage("Digite o titulo do Livro: ");
+                        String titulo = ui.catchUserResponseString();
+                        ui.renderMessage("Digite o isbn do Livro: ");
+                        String isbn = ui.catchUserResponseString();
+                        ui.renderMessage("Quantas cópias deseja excluir?(Default = 1): ");
+                        int quantidade = 1;
+                        try {
+                            quantidade = Integer.parseInt(ui.catchUserResponseString());
+                        } catch (Exception e) {
+                            ui.renderMessage("ERRO: Número não esperado digitado.");
+                        }
+                        db.excluirCopiasLivro(titulo, isbn, quantidade);
+                    }
+
+                    case RemoverMembro -> {
+                        ui.renderMessage("Digite o email: ");
+                        String email = ui.catchUserResponseString();
+                        db.excluirMembro(email);
+                    }
+
+                    case AtualizarMembro -> {
+                        ui.renderMessage("Email membro: ");
+                        String email = ui.catchUserResponseString();
+                        ui.renderMessage("Senha membro: ");
+                        String senha = ui.catchUserResponseString();
+                        if(db.validarLogin(email,senha)) {
+                            ui.renderMessage("Usuário encontrado!\nDigite os novos dados do usuário:\n");
+                            var novosDados = ui.requestMembroInfo();
+                            db.atualizarDadosUsuario(email, senha,
+                                   novosDados.getEmail(), novosDados.getSenha(), novosDados.getTelefone());
+                        } else {
+                            ui.renderMessage("Usuário não encontrado...");
+                        }
+                    }
+
+                    case LogOut -> {
+                        this.login = Optional.empty();
+                    }
+
+                    default -> throw new IllegalStateException("Unexpected value: " + response);
                 }
-                i++;
             } else {
                 Map<String, String> loginInfo = ui.renderLoginInterface();
                 this.login = db.autenticarBibliotecario(loginInfo.get("email"), loginInfo.get("password"));
@@ -65,6 +122,6 @@ public class AppLoop {
                 ui.renderMessage(massage);
             }
 
-        }while(i < 5);
+        }while(true);
     }
 }

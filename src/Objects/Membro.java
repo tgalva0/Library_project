@@ -1,5 +1,7 @@
 package Objects;
 
+import main.database.PapelMembro;
+
 import java.sql.Connection;
 
 public class Membro {
@@ -7,12 +9,14 @@ public class Membro {
     private String email;
     private String senha_hash;
     private String telefone;
+    private PapelMembro papel;
 
-    public Membro(String nome, String email, String senha, String telefone) {
+    public Membro(String nome, String email, String senha, String telefone, PapelMembro papel) {
         this.nome = nome;
         this.email = email;
         this.senha_hash = senha;
         this.telefone = telefone;
+        this.papel = papel;
     }
 
     public String getNome() {
@@ -29,6 +33,10 @@ public class Membro {
 
     public String getTelefone() {
         return telefone;
+    }
+
+    public PapelMembro getPapel() {
+        return papel;
     }
 
     public String toString() {

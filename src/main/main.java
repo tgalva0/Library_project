@@ -11,11 +11,6 @@ public class main {
         var app = new AppLoop();
         app.loop();
 
-
-
-
-
-
         var db = new DatabaseAPI();
 //        var ui = new TerminalUI();
 //        System.out.println(db.inserirMembro("thi@email", "senha", "Jose", "jose@email", "111", PapelMembro.CLIENTE, "senha"));

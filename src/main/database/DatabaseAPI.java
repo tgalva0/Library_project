@@ -14,19 +14,19 @@ import java.util.Optional;
 public class DatabaseAPI {
     Connection conexao = MyJDBC.getConnection();
 
-    public Optional<Livro> buscarLivroPorTitulo(String titulo) {
+    public Livro buscarLivroPorTituloEAutor(String titulo, String nomeAutor) {
         try {
             // Buscar informações do livro e autor
             String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
-                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ?";
+                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ? AND a.nome = ?";
             PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
             stmtLivro.setString(1, titulo);
+            stmtLivro.setString(2, nomeAutor);
             ResultSet rsLivro = stmtLivro.executeQuery();
 
             if (rsLivro.next()) {
                 int idLivro = rsLivro.getInt("id_livro");
                 String isbn = rsLivro.getString("isbn");
-                String autor = rsLivro.getString("autor");
 
                 stmtLivro.close();
 
@@ -42,7 +42,7 @@ public class DatabaseAPI {
                 }
                 stmtCopias.close();
 
-                return Optional.of(new Livro(idLivro, titulo, isbn, numCopiasDisponiveis, autor));
+                return new Livro(titulo, isbn, numCopiasDisponiveis, nomeAutor);
             } else {
                 stmtLivro.close();
                 System.out.println("Livro não encontrado!");
@@ -52,6 +52,46 @@ public class DatabaseAPI {
             System.out.println("Erro ao buscar livro: " + e.getMessage());
             return null;
         }
+    }
+
+    public Optional<List<Livro>> buscarLivrosPorTitulo(String titulo) {
+        List<Livro> livros = new ArrayList<>();
+
+        try {
+            // Buscar informações dos livros e autores
+            String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
+                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ?";
+            PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
+            stmtLivro.setString(1, titulo);
+            ResultSet rsLivro = stmtLivro.executeQuery();
+
+            while (rsLivro.next()) {
+                int idLivro = rsLivro.getInt("id_livro");
+                String isbn = rsLivro.getString("isbn");
+                String autor = rsLivro.getString("autor");
+
+                // Contar cópias disponíveis
+                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
+                PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
+                stmtCopias.setInt(1, idLivro);
+                ResultSet rsCopias = stmtCopias.executeQuery();
+
+                int numCopiasDisponiveis = 0;
+                if (rsCopias.next()) {
+                    numCopiasDisponiveis = rsCopias.getInt("num_copias");
+                }
+                stmtCopias.close();
+
+                // Adicionar livro à lista
+                livros.add(new Livro(titulo, isbn, numCopiasDisponiveis, autor));
+            }
+            stmtLivro.close();
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar livros: " + e.getMessage());
+        }
+
+        return Optional.of(livros);
     }
 
 
@@ -84,7 +124,7 @@ public class DatabaseAPI {
                 }
                 stmtCopias.close();
 
-                livros.add(new Livro(idLivro, titulo, isbn, numCopiasDisponiveis, nomeAutor));
+                livros.add(new Livro(titulo, isbn, numCopiasDisponiveis, nomeAutor));
             }
             stmtLivros.close();
 
@@ -143,7 +183,7 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
 
     public Optional<Membro> buscarMembroPorEmail(String email) {
         try {
-            String sql = "SELECT nome, email, senha_hash, telefone FROM membros WHERE email = ?";
+            String sql = "SELECT nome, email, senha_hash, telefone, papel FROM membros WHERE email = ?";
             PreparedStatement stmt = conexao.prepareStatement(sql);
             stmt.setString(1, email);
             ResultSet rs = stmt.executeQuery();
@@ -152,9 +192,15 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
                 String nome = rs.getString("nome");
                 String senhaHash = rs.getString("senha_hash");
                 String telefone = rs.getString("telefone");
+                String papel = rs.getString("papel");
+                PapelMembro papelmembro = PapelMembro.CLIENTE;
+
+                if(papel.equals("bibliotecario")) {
+                    papelmembro = PapelMembro.BIBLIOTECARIO;
+                }
 
                 stmt.close();
-                return Optional.of(new Membro(nome, email, senhaHash, telefone));
+                return Optional.of(new Membro(nome, email, senhaHash, telefone, papelmembro));
             } else {
                 stmt.close();
                 System.out.println("Membro não encontrado!");
@@ -197,10 +243,10 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
             stmtAutor.close();
 
             // Verificar se o livro já existe
-            String sqlLivroExistente = "SELECT id_livro FROM livro WHERE titulo = ? AND isbn = ?";
+            String sqlLivroExistente = "SELECT id_livro FROM livro WHERE titulo = ? AND id_autor = ?";
             PreparedStatement stmtLivroExistente = conexao.prepareStatement(sqlLivroExistente);
             stmtLivroExistente.setString(1, titulo);
-            stmtLivroExistente.setString(2, isbn);
+            stmtLivroExistente.setInt(2, idAutor);
             ResultSet rsLivroExistente = stmtLivroExistente.executeQuery();
 
             int idLivro;
@@ -333,8 +379,7 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
                 stmt.close();
 
                 // Comparar a senha fornecida com o hash armazenado
-//                return BCrypt.checkpw(senha, hashArmazenado);
-                return senha.equals(hashArmazenado);
+                return BCrypt.checkpw(senha, hashArmazenado);
             } else {
                 stmt.close();
                 return false; // Email não encontrado
@@ -529,14 +574,15 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
         }
     }
 
-    public boolean excluirCopiasLivro( String tituloLivro, int quantidade) {
+    public boolean excluirCopiasLivro( String tituloLivro, String isbn, int quantidade) {
         try {
 
 
             // Verificar se o livro existe
-            String sqlLivro = "SELECT id_livro, id_autor FROM livro WHERE titulo = ?";
+            String sqlLivro = "SELECT id_livro, id_autor FROM livro WHERE titulo = ? AND isbn = ?";
             PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
             stmtLivro.setString(1, tituloLivro);
+            stmtLivro.setString(2, isbn);
             ResultSet rsLivro = stmtLivro.executeQuery();
 
             int idLivro, idAutor;

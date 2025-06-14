@@ -9,10 +9,9 @@ public enum MainHubActions {
     DevolverEmprestimo,
     RegistrarLivro,
     RegistrarMembro,
-    RemoverLivro,
     RemoverCopiasLivro,
     RemoverMembro,
-    AtualizarLivro,
     AtualizarMembro,
+    LogOut,
     ERRO
 }
