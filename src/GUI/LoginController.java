@@ -26,7 +26,15 @@ public class LoginController {
             AppLoop_GUI.getInstance().setUsuarioLogado(usuario.orElse(null));
             AppLoop_GUI.getInstance().mostrarMenuPrincipal();
         } else {
-            // alerta de erro
+            mostrarAlerta("Email ou senha não correspondem a um Bibliotecário...");
         }
+    }
+
+    private void mostrarAlerta(String mensagem) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Aviso");
+        alert.setHeaderText(null);
+        alert.setContentText(mensagem);
+        alert.showAndWait();
     }
 }
