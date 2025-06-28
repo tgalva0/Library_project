@@ -8,45 +8,48 @@ import java.util.Optional;
 public class DatabaseAPI {
     Connection conexao = MyJDBC.getConnection();
 
-    public Livro buscarLivroPorTituloEAutor(String titulo, String nomeAutor) {
-        try {
-            // Buscar informações do livro e autor
-            String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
-                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ? AND a.nome = ?";
-            PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
-            stmtLivro.setString(1, titulo);
-            stmtLivro.setString(2, nomeAutor);
-            ResultSet rsLivro = stmtLivro.executeQuery();
+    public Optional<List<Livro>> buscarLivrosPorTituloInicial(String prefixo) {
+        String sql = """
+        SELECT 
+            l.id_livro,
+            l.titulo,
+            l.isbn,
+            a.Nome AS nome_autor,
+            COUNT(c.id_copia_livro) AS quantidade_copias
+        FROM livro l
+        JOIN autor a ON l.id_autor = a.id_autor
+        LEFT JOIN copia_livro c ON l.id_livro = c.id_livro
+        WHERE l.titulo LIKE ?
+        GROUP BY l.id_livro, l.titulo, a.nome
+    """;
 
-            if (rsLivro.next()) {
-                int idLivro = rsLivro.getInt("id_livro");
-                String isbn = rsLivro.getString("isbn");
+        try (Connection conn = MyJDBC.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-                stmtLivro.close();
+            stmt.setString(1, prefixo + "%");
+            ResultSet rs = stmt.executeQuery();
 
-                // Contar cópias disponíveis
-                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
-                PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
-                stmtCopias.setInt(1, idLivro);
-                ResultSet rsCopias = stmtCopias.executeQuery();
+            List<Livro> livros = new ArrayList<>();
 
-                int numCopiasDisponiveis = 0;
-                if (rsCopias.next()) {
-                    numCopiasDisponiveis = rsCopias.getInt("num_copias");
-                }
-                stmtCopias.close();
-
-                return new Livro(titulo, isbn, numCopiasDisponiveis, nomeAutor);
-            } else {
-                stmtLivro.close();
-                System.out.println("Livro não encontrado!");
-                return null;
+            while (rs.next()) {
+                Livro livro = new Livro(
+                        rs.getString("titulo"),
+                        rs.getString("isbn"),
+                        rs.getInt("quantidade_copias"),
+                        rs.getString("nome_autor")
+                );
+                livros.add(livro);
             }
+
+            return livros.isEmpty() ? Optional.empty() : Optional.of(livros);
+
         } catch (SQLException e) {
-            System.out.println("Erro ao buscar livro: " + e.getMessage());
-            return null;
+            e.printStackTrace();
+            return Optional.empty();
         }
     }
+
+
 
     public Optional<List<Livro>> buscarLivrosPorTitulo(String titulo) {
         List<Livro> livros = new ArrayList<>();
@@ -150,20 +153,19 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
             stmtMembro.close();
 
             // Buscar empréstimos vinculados ao membro
-            String sqlEmprestimos = "SELECT * FROM emprestimo WHERE id_membro = ?";
+            String sqlEmprestimos = "SELECT emprestimo.*, livro.titulo FROM emprestimo\n JOIN copia_livro ON emprestimo.id_copia_livro = copia_livro.id_copia_livro JOIN livro ON copia_livro.id_livro = livro.id_livro WHERE emprestimo.id_membro = ?;";
             PreparedStatement stmtEmprestimos = conexao.prepareStatement(sqlEmprestimos);
             stmtEmprestimos.setInt(1, idMembro);
             ResultSet rsEmprestimos = stmtEmprestimos.executeQuery();
 
             while (rsEmprestimos.next()) {
-                int idEmprestimo = rsEmprestimos.getInt("id_emprestimo");
-                int idCopiaLivro = rsEmprestimos.getInt("id_copia_livro");
+                String titulo = rsEmprestimos.getString("titulo");
                 Timestamp dataEmprestimo = rsEmprestimos.getTimestamp("data_emprestimo");
                 Timestamp dataDevolucao = rsEmprestimos.getTimestamp("data_devolucao");
                 String statusEmprestimo = rsEmprestimos.getString("status_emprestimo");
                 double multa = rsEmprestimos.getDouble("multa");
 
-                emprestimos.add(new Emprestimo(idEmprestimo, idCopiaLivro, idMembro, dataEmprestimo, dataDevolucao, statusEmprestimo, multa));
+                emprestimos.add(Emprestimo.EmprestimoFactory(titulo, email, dataEmprestimo, dataDevolucao, statusEmprestimo, multa));
             }
             stmtEmprestimos.close();
 

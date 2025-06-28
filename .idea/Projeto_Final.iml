@@ -55,5 +55,6 @@
     </orderEntry>
     <orderEntry type="library" name="dotenv-java-3.2.0" level="project" />
     <orderEntry type="library" name="mysql-connector-j-9.2.0" level="project" />
+    <orderEntry type="library" name="lib" level="project" />
   </component>
 </module>

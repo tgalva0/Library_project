@@ -3,7 +3,7 @@ package main.database;
 import java.util.Map;
 import java.util.Optional;
 
-public class AppLoop {
+public class AppLoop_TerminalUI {
     private TerminalUI ui = new TerminalUI();
     private DatabaseAPI db = new DatabaseAPI();
     private Optional<Bibliotecario> login = Optional.empty();
@@ -16,7 +16,7 @@ public class AppLoop {
                     case LivroPorTitulo -> {
                         ui.renderMessage("Digite o Titulo do Livro: ");
                         String titulo = ui.catchUserResponseString();
-                        ui.renderResultSearchLivro(db.buscarLivrosPorTitulo(titulo));
+                        ui.renderResultSearchLivro(db.buscarLivrosPorTituloInicial(titulo));
                         break;
                     }
 

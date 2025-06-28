@@ -3,27 +3,25 @@ package main.database;
 import java.sql.Timestamp;
 
 public class Emprestimo {
-    private int idEmprestimo;
-    private int idCopiaLivro;
-    private int idMembro;
+
+    private String titulo;
+    private String emailMembro;
     private Timestamp dataEmprestimo;
     private Timestamp dataDevolucao;
     private String statusEmprestimo;
     private double multa;
 
-    public Emprestimo(int idEmprestimo, int idCopiaLivro, int idMembro, Timestamp dataEmprestimo, Timestamp dataDevolucao, String statusEmprestimo, double multa) {
-        this.idEmprestimo = idEmprestimo;
-        this.idCopiaLivro = idCopiaLivro;
-        this.idMembro = idMembro;
+    public Emprestimo(String titulo, String emailMembro, Timestamp dataEmprestimo, Timestamp dataDevolucao, String statusEmprestimo, double multa) {
+        this.titulo = titulo;
+        this.emailMembro = emailMembro;
         this.dataEmprestimo = dataEmprestimo;
         this.dataDevolucao = dataDevolucao;
         this.statusEmprestimo = statusEmprestimo;
         this.multa = multa;
     }
 
-    public int getIdEmprestimo() { return idEmprestimo; }
-    public int getIdCopiaLivro() { return idCopiaLivro; }
-    public int getIdMembro() { return idMembro; }
+    public String getTitulo() { return titulo; }
+    public String getEmailMembro() { return emailMembro; }
     public Timestamp getDataEmprestimo() { return dataEmprestimo; }
     public Timestamp getDataDevolucao() { return dataDevolucao; }
     public String getStatusEmprestimo() { return statusEmprestimo; }
@@ -31,14 +29,17 @@ public class Emprestimo {
 
     @Override
     public String toString() {
-        return "Emprestimo{" +
-                "\nidEmprestimo=" + idEmprestimo +
-                "\nidCopiaLivro=" + idCopiaLivro +
-                "\nidMembro=" + idMembro +
-                "\ndataEmprestimo=" + dataEmprestimo +
-                "\ndataDevolucao=" + dataDevolucao +
-                "\nstatusEmprestimo='" + statusEmprestimo  +
-                "\nmulta=" + multa +
+        return "Empréstimo{" +
+                "\nTitulo= " + titulo +
+                "\nEmail Membro= " + emailMembro +
+                "\nData de Empréstimo =" + dataEmprestimo +
+                "\nData Devolução=" + dataDevolucao +
+                "\nStatus Empréstimo='" + statusEmprestimo  +
+                "\nmulta=" + multa +"\n" +
                 '}';
+    }
+
+    public static Emprestimo EmprestimoFactory(String titulo, String emailMembro, Timestamp dataEmprestimo, Timestamp dataDevolucao, String statusEmprestimo, double multa) {
+        return new Emprestimo(titulo, emailMembro, dataEmprestimo, dataDevolucao, statusEmprestimo, multa);
     }
 }
