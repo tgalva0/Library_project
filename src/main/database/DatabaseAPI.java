@@ -1,5 +1,8 @@
 package main.database;
 
+import main.database.strategy.CalculadoraMulta;
+import main.database.strategy.MultaBasica;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -465,73 +468,76 @@ public class DatabaseAPI {
 
     public boolean darBaixaEmprestimo(String emailMembro, String tituloLivro) {
         try {
-
-            // Verificar se o membro existe
+            // 1. Buscar o ID do membro pelo email
             String sqlMembro = "SELECT id_membro FROM membros WHERE email = ?";
             PreparedStatement stmtMembro = conexao.prepareStatement(sqlMembro);
             stmtMembro.setString(1, emailMembro);
             ResultSet rsMembro = stmtMembro.executeQuery();
 
-            int idMembro;
-            if (rsMembro.next()) {
-                idMembro = rsMembro.getInt("id_membro");
-            } else {
+            if (!rsMembro.next()) {
                 System.out.println("Membro não encontrado!");
                 return false;
             }
+
+            int idMembro = rsMembro.getInt("id_membro");
             stmtMembro.close();
 
-            // Verificar se há um empréstimo ativo ou atrasado para o livro
-            String sqlEmprestimo = "SELECT id_emprestimo, id_copia_livro, status_emprestimo, DATEDIFF(NOW(), data_devolucao) AS dias_atraso " +
-                    "FROM emprestimo WHERE id_membro = ? AND id_copia_livro = " +
-                    "(SELECT id_copia_livro FROM copia_livro WHERE id_livro = (SELECT id_livro FROM livro WHERE titulo = ?) LIMIT 1) " +
+            // 2. Buscar o empréstimo ativo ou atrasado do livro desejado
+            String sqlEmprestimo = "SELECT id_emprestimo, id_copia_livro, DATEDIFF(NOW(), data_devolucao) AS dias_atraso " +
+                    "FROM emprestimo WHERE id_membro = ? AND id_copia_livro = (" +
+                    "SELECT id_copia_livro FROM copia_livro WHERE id_livro = " +
+                    "(SELECT id_livro FROM livro WHERE titulo = ?) LIMIT 1) " +
                     "AND (status_emprestimo = 'ativo' OR status_emprestimo = 'atrasado')";
+
             PreparedStatement stmtEmprestimo = conexao.prepareStatement(sqlEmprestimo);
             stmtEmprestimo.setInt(1, idMembro);
             stmtEmprestimo.setString(2, tituloLivro);
             ResultSet rsEmprestimo = stmtEmprestimo.executeQuery();
 
-            if (rsEmprestimo.next()) {
-                int idEmprestimo = rsEmprestimo.getInt("id_emprestimo");
-                int idCopiaLivro = rsEmprestimo.getInt("id_copia_livro");
-                String statusEmprestimo = rsEmprestimo.getString("status_emprestimo");
-                int diasAtraso = rsEmprestimo.getInt("dias_atraso");
-
-                stmtEmprestimo.close();
-
-                // Se o empréstimo estiver atrasado, calcular multa
-                if (statusEmprestimo.equals("atrasado") && diasAtraso > 10) {
-                    double multa = diasAtraso * 0.5;
-
-                    String sqlAtualizarMulta = "UPDATE emprestimo SET multa = ? WHERE id_emprestimo = ?";
-                    PreparedStatement stmtMulta = conexao.prepareStatement(sqlAtualizarMulta);
-                    stmtMulta.setDouble(1, multa);
-                    stmtMulta.setInt(2, idEmprestimo);
-                    stmtMulta.executeUpdate();
-                    stmtMulta.close();
-                    System.out.println("Multa aplicada: R$ " + multa);
-                }
-
-                // Atualizar status do empréstimo para 'concluído'
-                String sqlAtualizarEmprestimo = "UPDATE emprestimo SET status_emprestimo = 'concluído', data_devolucao = NOW() WHERE id_emprestimo = ?";
-                PreparedStatement stmtAtualizarEmprestimo = conexao.prepareStatement(sqlAtualizarEmprestimo);
-                stmtAtualizarEmprestimo.setInt(1, idEmprestimo);
-                stmtAtualizarEmprestimo.executeUpdate();
-                stmtAtualizarEmprestimo.close();
-
-                // Atualizar status da cópia do livro para 'disponível'
-                String sqlAtualizarCopia = "UPDATE copia_livro SET status_livro = 'disponivel' WHERE id_copia_livro = ?";
-                PreparedStatement stmtAtualizarCopia = conexao.prepareStatement(sqlAtualizarCopia);
-                stmtAtualizarCopia.setInt(1, idCopiaLivro);
-                stmtAtualizarCopia.executeUpdate();
-                stmtAtualizarCopia.close();
-
-                System.out.println("Empréstimo concluído e cópia do livro disponível!");
-                return true;
-            } else {
-                System.out.println("Nenhum empréstimo ativo ou atrasado encontrado para este livro.");
+            if (!rsEmprestimo.next()) {
+                System.out.println("Nenhum empréstimo ativo ou atrasado encontrado.");
                 return false;
             }
+
+            int idEmprestimo = rsEmprestimo.getInt("id_emprestimo");
+            int idCopiaLivro = rsEmprestimo.getInt("id_copia_livro");
+            int diasAtraso = rsEmprestimo.getInt("dias_atraso");
+            stmtEmprestimo.close();
+
+            // 3. Decidir multa e status com base no atraso
+            double multa = 0;
+            String novoStatus = "concluído";
+
+            if (diasAtraso > 0) {
+                if (diasAtraso > 10) {
+                    CalculadoraMulta calculadora = new CalculadoraMulta(new MultaBasica());
+                    multa = calculadora.calcular(diasAtraso);
+                }
+                if (multa > 0) {
+                    novoStatus = "atrasado";
+                }
+            }
+
+            // 4. Atualizar o empréstimo (multa, status e devolução)
+            String sqlUpdateEmprestimo = "UPDATE emprestimo SET multa = ?, status_emprestimo = ?, data_devolucao = NOW() " +
+                    "WHERE id_emprestimo = ?";
+            PreparedStatement stmtUpdateEmprestimo = conexao.prepareStatement(sqlUpdateEmprestimo);
+            stmtUpdateEmprestimo.setDouble(1, multa);
+            stmtUpdateEmprestimo.setString(2, novoStatus);
+            stmtUpdateEmprestimo.setInt(3, idEmprestimo);
+            stmtUpdateEmprestimo.executeUpdate();
+            stmtUpdateEmprestimo.close();
+
+            // 5. Atualizar a cópia para disponível
+            String sqlAtualizarCopia = "UPDATE copia_livro SET status_livro = 'disponivel' WHERE id_copia_livro = ?";
+            PreparedStatement stmtAtualizarCopia = conexao.prepareStatement(sqlAtualizarCopia);
+            stmtAtualizarCopia.setInt(1, idCopiaLivro);
+            stmtAtualizarCopia.executeUpdate();
+            stmtAtualizarCopia.close();
+
+            // 6. Mensagem final
+            System.out.printf("Empréstimo finalizado com status '%s'. Multa aplicada: R$ %.2f\n", novoStatus, multa);
+            return true;
 
         } catch (SQLException e) {
             System.out.println("Erro ao dar baixa no empréstimo: " + e.getMessage());
