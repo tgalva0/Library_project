@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+<VBox spacing="12" alignment="TOP_CENTER" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="GUI.RegistrarMembroController"
+      style="-fx-padding: 20;" prefWidth="500" prefHeight="450">
+
+    <Label text="Cadastro de Membro" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+    <TextField fx:id="campoNome" promptText="Nome completo" maxWidth="350"/>
+    <TextField fx:id="campoEmail" promptText="Email" maxWidth="350"/>
+    <TextField fx:id="campoTelefone" promptText="Telefone" maxWidth="350"/>
+    <PasswordField fx:id="campoSenha" promptText="Senha" maxWidth="350"/>
+
+    <ComboBox fx:id="comboPapel" promptText="Selecione o papel" maxWidth="350">
+        <items>
+            <FXCollections fx:factory="observableArrayList">
+                <String fx:value="CLIENTE"/>
+                <String fx:value="BIBLIOTECARIO"/>
+            </FXCollections>
+        </items>
+    </ComboBox>
+
+    <Button text="Registrar" onAction="#handleRegistrar" maxWidth="200"/>
+    <Button text="Voltar ao Menu" onAction="#handleVoltar" maxWidth="200"/>
+</VBox>

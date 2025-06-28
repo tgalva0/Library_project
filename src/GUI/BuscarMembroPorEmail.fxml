@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15" alignment="TOP_CENTER" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="GUI.BuscarMembroPorEmailController"
+      style="-fx-padding: 20;" prefWidth="500" prefHeight="350">
+
+    <TextField fx:id="campoEmail" promptText="Digite o e-mail do membro..." maxWidth="350"/>
+
+    <Button text="Buscar" onAction="#handleBuscarMembro" maxWidth="150"/>
+
+    <VBox spacing="8" alignment="CENTER_LEFT">
+        <Label fx:id="labelNome" text="Nome: " />
+        <Label fx:id="labelTelefone" text="Telefone: " />
+        <Label fx:id="labelPapel" text="Papel: " />
+    </VBox>
+
+    <Button text="Voltar ao Menu" onAction="#handleVoltar" maxWidth="150"/>
+</VBox>

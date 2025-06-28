@@ -1,25 +1,21 @@
 package GUI;
 
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.collections.*;
-import javafx.stage.Stage;
+import javafx.scene.control.cell.PropertyValueFactory;
 import main.database.Livro;
 import main.database.DatabaseAPI;
-
+import javafx.scene.Node;
+import javafx.stage.Stage;
+import javafx.scene.Scene;
+import javafx.fxml.FXMLLoader;
 import java.io.IOException;
 
-public class BuscarLivroPorTituloController {
+public class BuscarLivroPorAutorController {
 
-    @FXML private TextField campoBusca;
-    @FXML private TableView<Livro> tabelaLivros;
+    @FXML private TextField campoBuscaAutor;
+    @FXML private TableView<Livro> tabelaLivrosAutor;
     @FXML private TableColumn<Livro, String> colTitulo;
     @FXML private TableColumn<Livro, String> colISBN;
     @FXML private TableColumn<Livro, Integer> colCopias;
@@ -30,16 +26,16 @@ public class BuscarLivroPorTituloController {
 
     @FXML
     public void initialize() {
-        colTitulo.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getTitulo()));
-        colISBN.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getIsbn()));
-        colCopias.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getNum_copias()));
-        colAutor.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getAutor()));
+        colTitulo.setCellValueFactory(new PropertyValueFactory<>("titulo"));
+        colISBN.setCellValueFactory(new PropertyValueFactory<>("isbn"));
+        colCopias.setCellValueFactory(new PropertyValueFactory<>("num_copias"));
+        colAutor.setCellValueFactory(new PropertyValueFactory<>("autor"));
 
-        tabelaLivros.setItems(livros);
+        tabelaLivrosAutor.setItems(livros);
 
-        campoBusca.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal.length() >= 3) {
-                db.buscarLivrosPorTituloInicial(newVal).ifPresentOrElse(
+        campoBuscaAutor.textProperty().addListener((obs, oldText, newText) -> {
+            if (newText.length() >= 3) {
+                db.buscarLivrosPorAutor(newText).ifPresentOrElse(
                         resultado -> livros.setAll(resultado),
                         livros::clear
                 );
@@ -48,7 +44,7 @@ public class BuscarLivroPorTituloController {
             }
         });
 
-        tabelaLivros.setRowFactory(tv -> {
+        tabelaLivrosAutor.setRowFactory(tv -> {
             TableRow<Livro> row = new TableRow<>();
 
             ContextMenu contextMenu = new ContextMenu();
@@ -90,23 +86,20 @@ public class BuscarLivroPorTituloController {
     }
 
     @FXML
-    private void handleVoltar(ActionEvent event) {
+    private void handleVoltar() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/MainMenu.fxml"));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            Stage stage = (Stage) campoBuscaAutor.getScene().getWindow();
+            stage.setScene(new Scene(loader.load()));
             stage.setTitle("Menu Principal");
             stage.show();
-
         } catch (IOException e) {
             e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erro");
-            alert.setHeaderText("Não foi possível voltar ao menu");
-            alert.setContentText("Verifique se o arquivo MainMenu.fxml está no caminho correto.");
-            alert.showAndWait();
+            Alert alerta = new Alert(Alert.AlertType.ERROR);
+            alerta.setTitle("Erro");
+            alerta.setHeaderText("Não foi possível voltar ao menu");
+            alerta.setContentText("Verifique o caminho do arquivo MainMenu.fxml.");
+            alerta.showAndWait();
         }
     }
 }

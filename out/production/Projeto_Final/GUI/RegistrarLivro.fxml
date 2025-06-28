@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="12" alignment="TOP_CENTER" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="GUI.RegistrarLivroController"
+      style="-fx-padding: 20;" prefWidth="500" prefHeight="400">
+
+    <Label text="Cadastro de Livro" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+    <TextField fx:id="campoTitulo" promptText="Título do livro" maxWidth="350"/>
+    <TextField fx:id="campoISBN" promptText="ISBN" maxWidth="350"/>
+    <TextField fx:id="campoAutor" promptText="Nome do autor" maxWidth="350"/>
+
+    <Button text="Registrar" onAction="#handleRegistrarLivro" maxWidth="200"/>
+    <Label fx:id="mensagemLabel" text="" wrapText="true" maxWidth="400" style="-fx-text-fill: #2a2a2a;" />
+
+    <Button text="Voltar ao Menu" onAction="#handleVoltar" maxWidth="200"/>
+</VBox>

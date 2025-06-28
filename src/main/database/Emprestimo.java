@@ -1,6 +1,7 @@
 package main.database;
-
+import java.time.LocalDateTime;
 import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 
 public class Emprestimo {
 
@@ -38,6 +39,23 @@ public class Emprestimo {
                 "\nmulta=" + multa +"\n" +
                 '}';
     }
+
+    public String getDataEmprestimoFormatada() {
+        if (dataEmprestimo != null) {
+            return dataEmprestimo.toLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
+        return "-";
+    }
+
+    public String getDataDevolucaoFormatada() {
+        if (dataDevolucao != null) {
+            return dataDevolucao.toLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
+        return "-";
+    }
+
 
     public static Emprestimo EmprestimoFactory(String titulo, String emailMembro, Timestamp dataEmprestimo, Timestamp dataDevolucao, String statusEmprestimo, double multa) {
         return new Emprestimo(titulo, emailMembro, dataEmprestimo, dataDevolucao, statusEmprestimo, multa);

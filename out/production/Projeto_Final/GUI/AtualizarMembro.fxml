@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane hgap="15" vgap="10" alignment="CENTER" xmlns="http://javafx.com/javafx"
+          xmlns:fx="http://javafx.com/fxml"
+          fx:controller="GUI.AtualizarMembroController"
+          style="-fx-padding: 20;" prefWidth="600" prefHeight="400">
+
+    <Label text="Dados Atuais" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;" />
+    <Label text="Novos Dados" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-font-weight: bold;" />
+
+    <Label text="Email:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+    <Label fx:id="labelEmailAtual" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+
+    <Label text="Telefone:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+    <Label fx:id="labelTelefoneAtual" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+
+    <Label text="Novo Email:" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+    <TextField fx:id="campoNovoEmail" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+    <Label text="Novo Telefone:" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+    <TextField fx:id="campoNovoTelefone" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+    <Label text="Senha Atual:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+    <PasswordField fx:id="campoSenhaAtual" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+
+    <Label text="Nova Senha:" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+    <PasswordField fx:id="campoNovaSenha" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+    <Button text="Atualizar" onAction="#handleAtualizar" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+    <Label fx:id="mensagemLabel" GridPane.columnIndex="0" GridPane.rowIndex="8" GridPane.columnSpan="2" />
+    <Button text="Voltar ao Menu" onAction="#handleVoltar" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+</GridPane>
+

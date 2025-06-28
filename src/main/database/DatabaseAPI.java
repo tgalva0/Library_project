@@ -51,66 +51,76 @@ public class DatabaseAPI {
 
 
 
-    public Optional<List<Livro>> buscarLivrosPorTitulo(String titulo) {
-        List<Livro> livros = new ArrayList<>();
-
-        try {
-            // Buscar informações dos livros e autores
-            String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
-                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ?";
-            PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
-            stmtLivro.setString(1, titulo);
-            ResultSet rsLivro = stmtLivro.executeQuery();
-
-            while (rsLivro.next()) {
-                int idLivro = rsLivro.getInt("id_livro");
-                String isbn = rsLivro.getString("isbn");
-                String autor = rsLivro.getString("autor");
-
-                // Contar cópias disponíveis
-                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
-                PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
-                stmtCopias.setInt(1, idLivro);
-                ResultSet rsCopias = stmtCopias.executeQuery();
-
-                int numCopiasDisponiveis = 0;
-                if (rsCopias.next()) {
-                    numCopiasDisponiveis = rsCopias.getInt("num_copias");
-                }
-                stmtCopias.close();
-
-                // Adicionar livro à lista
-                livros.add(new Livro(titulo, isbn, numCopiasDisponiveis, autor));
-            }
-            stmtLivro.close();
-
-        } catch (SQLException e) {
-            System.out.println("Erro ao buscar livros: " + e.getMessage());
-        }
-
-        return Optional.of(livros);
-    }
-
+//    public Optional<List<Livro>> buscarLivrosPorTitulo(String titulo) { //metodo antigo
+//        List<Livro> livros = new ArrayList<>();
+//
+//        try {
+//            // Buscar informações dos livros e autores
+//            String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
+//                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ?";
+//            PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
+//            stmtLivro.setString(1, titulo);
+//            ResultSet rsLivro = stmtLivro.executeQuery();
+//
+//            while (rsLivro.next()) {
+//                int idLivro = rsLivro.getInt("id_livro");
+//                String isbn = rsLivro.getString("isbn");
+//                String autor = rsLivro.getString("autor");
+//
+//                // Contar cópias disponíveis
+//                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
+//                PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
+//                stmtCopias.setInt(1, idLivro);
+//                ResultSet rsCopias = stmtCopias.executeQuery();
+//
+//                int numCopiasDisponiveis = 0;
+//                if (rsCopias.next()) {
+//                    numCopiasDisponiveis = rsCopias.getInt("num_copias");
+//                }
+//                stmtCopias.close();
+//
+//                // Adicionar livro à lista
+//                livros.add(new Livro(titulo, isbn, numCopiasDisponiveis, autor));
+//            }
+//            stmtLivro.close();
+//
+//        } catch (SQLException e) {
+//            System.out.println("Erro ao buscar livros: " + e.getMessage());
+//        }
+//
+//        return Optional.of(livros);
+//    }
 
 
     public Optional<List<Livro>> buscarLivrosPorAutor(String nomeAutor) {
         List<Livro> livros = new ArrayList<>();
 
         try {
-            // Buscar livros do autor
-            String sqlLivros = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
-                    "JOIN autor a ON l.id_autor = a.id_autor WHERE a.nome = ?";
+            // Buscar livros de autores cujo nome começa com o prefixo informado
+            String sqlLivros = """
+            SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor
+            FROM livro l
+            JOIN autor a ON l.id_autor = a.id_autor
+            WHERE a.nome LIKE ?
+        """;
+
             PreparedStatement stmtLivros = conexao.prepareStatement(sqlLivros);
-            stmtLivros.setString(1, nomeAutor);
+            stmtLivros.setString(1, nomeAutor + "%"); // busca por prefixo
             ResultSet rsLivros = stmtLivros.executeQuery();
 
             while (rsLivros.next()) {
                 int idLivro = rsLivros.getInt("id_livro");
                 String titulo = rsLivros.getString("titulo");
                 String isbn = rsLivros.getString("isbn");
+                String nomeCompletoAutor = rsLivros.getString("autor");
 
                 // Contar cópias disponíveis
-                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
+                String sqlCopias = """
+                SELECT COUNT(*) AS num_copias
+                FROM copia_livro
+                WHERE id_livro = ? AND status_livro = 'disponivel'
+            """;
+
                 PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
                 stmtCopias.setInt(1, idLivro);
                 ResultSet rsCopias = stmtCopias.executeQuery();
@@ -121,19 +131,20 @@ public class DatabaseAPI {
                 }
                 stmtCopias.close();
 
-                livros.add(new Livro(titulo, isbn, numCopiasDisponiveis, nomeAutor));
+                livros.add(new Livro(titulo, isbn, numCopiasDisponiveis, nomeCompletoAutor));
             }
+
             stmtLivros.close();
 
         } catch (SQLException e) {
             System.out.println("Erro ao buscar livros do autor: " + e.getMessage());
         }
 
-        return Optional.of(livros);
+        return livros.isEmpty() ? Optional.empty() : Optional.of(livros);
     }
 
 
-public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
+    public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
         List<Emprestimo> emprestimos = new ArrayList<>();
 
         try {
@@ -200,11 +211,11 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
             } else {
                 stmt.close();
                 System.out.println("Membro não encontrado!");
-                return null;
+                return Optional.empty();
             }
         } catch (SQLException e) {
             System.out.println("Erro ao buscar membro: " + e.getMessage());
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -305,7 +316,7 @@ public Optional<List<Emprestimo>> buscarEmprestimosPorEmail(String email) {
 
                 if (rsVerificar.next()) {
                     System.out.println("Membro já cadastrado! Não será inserido novamente.");
-                    return true; // Sai do método sem inserir um novo membro
+                    return true; // Sai do metodo sem inserir um novo membro
                 }
                 stmtVerificar.close();
             }

@@ -62,52 +62,148 @@ public class MainMenuController {
 
     @FXML
     private void handleBuscarPorAutor(ActionEvent event) {
-        showPlaceholder("Procurar Livro por Autor");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/BuscarLivroPorAutor.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Buscar Livro por Autor");
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Não foi possível abrir a tela de busca por autor");
+            alert.setContentText("Verifique se o arquivo BuscarLivroPorAutor.fxml está no caminho correto.");
+            alert.showAndWait();
+        }
+
     }
 
     @FXML
     private void handleBuscarMembro(ActionEvent event) {
-        showPlaceholder("Procurar Membro por Email");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/BuscarMembroPorEmail.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Buscar Membro por Email");
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Não foi possível abrir a tela de busca de membro");
+            alert.setContentText("Verifique se o arquivo BuscarMembroPorEmail.fxml está no caminho correto.");
+            alert.showAndWait();
+        }
     }
 
     @FXML
-    private void handleBuscarEmprestimo(ActionEvent event) {
-        showPlaceholder("Procurar Empréstimo por Email");
+    private void handleBuscarEmprestimos(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/BuscarEmprestimoPorEmail.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Buscar Empréstimos por Email");
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Não foi possível abrir a tela de empréstimos");
+            alert.setContentText("Verifique o caminho do arquivo BuscarEmprestimosPorEmail.fxml.");
+            alert.showAndWait();
+        }
+    }
+
+    @FXML
+    private void handleBuscarLivroUnificado(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/BuscarLivroUnificado.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Buscar Livro");
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Erro ao abrir a tela de busca unificada.");
+            alert.setContentText("Verifique o caminho do arquivo BuscarLivroUnificado.fxml.");
+            alert.showAndWait();
+        }
     }
 
     @FXML
     private void handleRegistrarEmprestimo(ActionEvent event) {
-        showPlaceholder("Registrar Empréstimo");
-    }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/RegistrarEmprestimos.fxml"));
+            Parent root = loader.load();
 
-    @FXML
-    private void handleDevolverEmprestimo(ActionEvent event) {
-        showPlaceholder("Devolver Empréstimo");
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Registrar Empréstimo");
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Não foi possível abrir a tela de empréstimo");
+            alert.setContentText("Verifique o caminho do arquivo RegistrarEmprestimo.fxml.");
+            alert.showAndWait();
+        }
     }
 
     @FXML
     private void handleRegistrarLivro(ActionEvent event) {
-        showPlaceholder("Registrar Livro");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/RegistrarLivro.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Cadastro de Livro");
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Não foi possível abrir a tela de cadastro de livro");
+            alert.setContentText("Verifique o caminho do arquivo RegistrarLivro.fxml.");
+            alert.showAndWait();
+        }
     }
 
     @FXML
     private void handleRegistrarMembro(ActionEvent event) {
-        showPlaceholder("Registrar Membro");
-    }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/RegistrarMembro.fxml"));
+            Parent root = loader.load();
 
-    @FXML
-    private void handleRemoverCopia(ActionEvent event) {
-        showPlaceholder("Remover Cópias de Livro");
-    }
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Cadastro de Membro");
+            stage.show();
 
-    @FXML
-    private void handleRemoverMembro(ActionEvent event) {
-        showPlaceholder("Remover Membro");
-    }
-
-    @FXML
-    private void handleAtualizarMembro(ActionEvent event) {
-        showPlaceholder("Atualizar Membro");
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Não foi possível abrir a tela de cadastro");
+            alert.setContentText("Verifique se o arquivo RegistrarMembro.fxml está no caminho correto.");
+            alert.showAndWait();
+        }
     }
 
     @FXML

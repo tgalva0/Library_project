@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15" alignment="TOP_CENTER" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="GUI.BuscarEmprestimosPorEmailController"
+      style="-fx-padding: 20;" prefWidth="700" prefHeight="450">
+
+    <Label text="Buscar Empréstimos por Email" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+    <TextField fx:id="campoEmail" promptText="Digite o e-mail do membro..." maxWidth="400"/>
+    <Button text="Buscar" onAction="#handleBuscar" maxWidth="150"/>
+
+    <TableView fx:id="tabelaEmprestimos" prefHeight="300" maxWidth="680">
+        <columns>
+            <TableColumn fx:id="colTitulo" text="Título do Livro" prefWidth="200"/>
+            <TableColumn fx:id="colDataEmprestimo" text="Data Empréstimo" prefWidth="150"/>
+            <TableColumn fx:id="colDataDevolucao" text="Data Devolução" prefWidth="150"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
+            <TableColumn fx:id="colMulta" text="Multa" prefWidth="80"/>
+        </columns>
+    </TableView>
+
+    <Button text="Voltar ao Menu" onAction="#handleVoltar" maxWidth="150"/>
+</VBox>
