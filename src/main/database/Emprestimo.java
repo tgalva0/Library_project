@@ -40,24 +40,4 @@ public class Emprestimo {
                 '}';
     }
 
-    public String getDataEmprestimoFormatada() {
-        if (dataEmprestimo != null) {
-            return dataEmprestimo.toLocalDateTime()
-                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        }
-        return "-";
-    }
-
-    public String getDataDevolucaoFormatada() {
-        if (dataDevolucao != null) {
-            return dataDevolucao.toLocalDateTime()
-                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        }
-        return "-";
-    }
-
-
-    public static Emprestimo EmprestimoFactory(String titulo, String emailMembro, Timestamp dataEmprestimo, Timestamp dataDevolucao, String statusEmprestimo, double multa) {
-        return new Emprestimo(titulo, emailMembro, dataEmprestimo, dataDevolucao, statusEmprestimo, multa);
-    }
 }

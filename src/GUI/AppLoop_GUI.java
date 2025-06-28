@@ -45,10 +45,6 @@ public class AppLoop_GUI {
         carregarTela("/GUI/MainMenu.fxml", "Menu Principal");
     }
 
-    public void encerrarSessao() {
-        usuarioLogado = null;
-        mostrarTelaLogin();
-    }
 
     private void carregarTela(String caminhoFXML, String titulo) {
         try {

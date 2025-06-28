@@ -50,48 +50,6 @@ public class DatabaseAPI {
     }
 
 
-
-//    public Optional<List<Livro>> buscarLivrosPorTitulo(String titulo) { //metodo antigo
-//        List<Livro> livros = new ArrayList<>();
-//
-//        try {
-//            // Buscar informações dos livros e autores
-//            String sqlLivro = "SELECT l.id_livro, l.titulo, l.isbn, a.nome AS autor FROM livro l " +
-//                    "JOIN autor a ON l.id_autor = a.id_autor WHERE l.titulo = ?";
-//            PreparedStatement stmtLivro = conexao.prepareStatement(sqlLivro);
-//            stmtLivro.setString(1, titulo);
-//            ResultSet rsLivro = stmtLivro.executeQuery();
-//
-//            while (rsLivro.next()) {
-//                int idLivro = rsLivro.getInt("id_livro");
-//                String isbn = rsLivro.getString("isbn");
-//                String autor = rsLivro.getString("autor");
-//
-//                // Contar cópias disponíveis
-//                String sqlCopias = "SELECT COUNT(*) AS num_copias FROM copia_livro WHERE id_livro = ? AND status_livro = 'disponivel'";
-//                PreparedStatement stmtCopias = conexao.prepareStatement(sqlCopias);
-//                stmtCopias.setInt(1, idLivro);
-//                ResultSet rsCopias = stmtCopias.executeQuery();
-//
-//                int numCopiasDisponiveis = 0;
-//                if (rsCopias.next()) {
-//                    numCopiasDisponiveis = rsCopias.getInt("num_copias");
-//                }
-//                stmtCopias.close();
-//
-//                // Adicionar livro à lista
-//                livros.add(new Livro(titulo, isbn, numCopiasDisponiveis, autor));
-//            }
-//            stmtLivro.close();
-//
-//        } catch (SQLException e) {
-//            System.out.println("Erro ao buscar livros: " + e.getMessage());
-//        }
-//
-//        return Optional.of(livros);
-//    }
-
-
     public Optional<List<Livro>> buscarLivrosPorAutor(String nomeAutor) {
         List<Livro> livros = new ArrayList<>();
 
@@ -176,7 +134,7 @@ public class DatabaseAPI {
                 String statusEmprestimo = rsEmprestimos.getString("status_emprestimo");
                 double multa = rsEmprestimos.getDouble("multa");
 
-                emprestimos.add(Emprestimo.EmprestimoFactory(titulo, email, dataEmprestimo, dataDevolucao, statusEmprestimo, multa));
+                emprestimos.add(EmprestimoFactory.criarEmprestimo(titulo, email, dataEmprestimo, dataDevolucao, statusEmprestimo, multa));
             }
             stmtEmprestimos.close();
 
