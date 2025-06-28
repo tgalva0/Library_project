@@ -92,7 +92,9 @@ public class BuscarLivroUnificadoController {
             resultado = db.buscarLivrosPorAutor(termo);
         }
 
-        livros.setAll(resultado.get());
+        if(resultado.isPresent()) {
+            livros.setAll(resultado.get());
+        }
     }
 
     @FXML

@@ -12,12 +12,10 @@
            text="Olá, Bibliotecário!"
            style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2a2a2a;" />
 
-    <Button text="Buscar Livro (Título ou Autor)" onAction="#handleBuscarLivroUnificado" maxWidth="Infinity"/>
-    <Button text="Procurar Livro por Título"       onAction="#handleBuscarPorTitulo"     maxWidth="Infinity"/>
-    <Button text="Procurar Livro por Autor"         onAction="#handleBuscarPorAutor"      maxWidth="Infinity"/>
-    <Button text="Procurar Membro por Email"        onAction="#handleBuscarMembro"        maxWidth="Infinity"/>
-    <Button text="Procurar Empréstimo por Email"    onAction="#handleBuscarEmprestimos"    maxWidth="Infinity"/>
     <Button text="Registrar Empréstimo"             onAction="#handleRegistrarEmprestimo" maxWidth="Infinity"/>
+    <Button text="Buscar Empréstimo por Email"    onAction="#handleBuscarEmprestimos"    maxWidth="Infinity"/>
+    <Button text="Buscar Livro (Título ou Autor)" onAction="#handleBuscarLivroUnificado" maxWidth="Infinity"/>
+    <Button text="Buscar Membro por Email"        onAction="#handleBuscarMembro"        maxWidth="Infinity"/>
     <Button text="Registrar Livro"                  onAction="#handleRegistrarLivro"      maxWidth="Infinity"/>
     <Button text="Registrar Membro"                 onAction="#handleRegistrarMembro"     maxWidth="Infinity"/>
 

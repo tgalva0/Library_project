@@ -38,49 +38,6 @@ public class MainMenuController {
         }
     }
 
-    @FXML
-    private void handleBuscarPorTitulo(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/BuscarLivroPorTitulo.fxml"));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("Buscar Livro por Título");
-            stage.show();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erro");
-            alert.setHeaderText("Não foi possível abrir a tela de busca");
-            alert.setContentText("Verifique se o arquivo BuscarLivroPorTitulo.fxml está no caminho correto.");
-            alert.showAndWait();
-        }
-
-    }
-
-    @FXML
-    private void handleBuscarPorAutor(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/BuscarLivroPorAutor.fxml"));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("Buscar Livro por Autor");
-            stage.show();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erro");
-            alert.setHeaderText("Não foi possível abrir a tela de busca por autor");
-            alert.setContentText("Verifique se o arquivo BuscarLivroPorAutor.fxml está no caminho correto.");
-            alert.showAndWait();
-        }
-
-    }
 
     @FXML
     private void handleBuscarMembro(ActionEvent event) {
